@@ -48,6 +48,7 @@ Rails.application.routes.draw do
     resources :ingredientes
     resources :users
     resources :banners
+    resources :sedes
     resources :coupons do
       member do
         patch :toggle_activo

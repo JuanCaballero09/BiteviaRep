@@ -6,19 +6,49 @@
         <div class="field">
             <%= f.label :imagen, "Imagen del Banner" %>
             <br>
-            <p class="banner-dimensions-info">
-                📐 Dimensiones recomendadas: <strong>1920x600 píxeles</strong> (Proporción 16:5)
-            </p>
+            <div class="banner-info-grid">
+                <div class="info-card">
+                    <span class="info-icon">📐</span>
+                    <div>
+                        <strong>Relación de Aspecto</strong>
+                        <p>19:9 (Panorámico)</p>
+                        <small>Se adapta automáticamente</small>
+                    </div>
+                </div>
+                <div class="info-card">
+                    <span class="info-icon">🖼️</span>
+                    <div>
+                        <strong>Dimensiones Recomendadas</strong>
+                        <p>1920 x 911 píxeles</p>
+                        <small>O cualquier múltiplo de 19:9</small>
+                    </div>
+                </div>
+                <div class="info-card">
+                    <span class="info-icon">✨</span>
+                    <div>
+                        <strong>Peso del Archivo</strong>
+                        <p>Máximo 5MB</p>
+                        <small>JPG, PNG, WebP</small>
+                    </div>
+                </div>
+            </div>
             <br>
             <%= f.file_field :imagen, accept: "image/*", id: "banner-image-input" %>
         </div>
 
-        <div id="banner-preview-container" style="display: none; margin: 20px 0;">
-            <h3>Vista Previa del Banner</h3>
-            <div class="banner-preview-wrapper" style="aspect-ratio: 16 / 5; overflow: hidden; border: 2px solid #ddd; border-radius: 8px; position: relative; background: #f5f5f5;">
-                <img id="banner-preview" src="" alt="Vista previa" style="width: 100%; height: 100%; object-fit: cover; filter: brightness(0.7);">
+        <div id="banner-preview-container" style="display: none; margin: 30px 0;">
+            <h3 style="margin-bottom: 20px;">Vista Previa del Banner</h3>
+            
+            <div class="preview-grid">
+                <div class="preview-item">
+                    <h4>Aspecto 19:9 Responsive</h4>
+                    <div class="banner-preview-wrapper">
+                        <img class="banner-preview" src="" alt="Vista Banner">
+                    </div>
+                </div>
             </div>
-            <p id="banner-dimensions-display" style="margin-top: 10px; font-size: 14px; color: #666;"></p>
+            
+            <p id="banner-dimensions-display" style="margin-top: 20px; font-size: 14px; color: #666; text-align: center;"></p>
         </div>
 
         <div>
@@ -29,18 +59,90 @@
 </section>
 
 <style>
-.banner-dimensions-info {
-    background: #f0f8ff;
-    border-left: 4px solid #2196F3;
-    padding: 10px 15px;
-    margin: 10px 0;
-    font-size: 14px;
-    color: #333;
+.banner-info-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 15px;
+    margin: 15px 0;
+}
+
+.info-card {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 18px;
+    border-radius: 12px;
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+.info-icon {
+    font-size: 32px;
+    flex-shrink: 0;
+}
+
+.info-card strong {
+    display: block;
+    font-size: 16px;
+    margin-bottom: 6px;
+    font-weight: 600;
+}
+
+.info-card p {
+    margin: 0 0 4px 0;
+    font-size: 13px;
+    opacity: 0.95;
+    line-height: 1.4;
+}
+
+.info-card small {
+    display: block;
+    font-size: 11px;
+    opacity: 0.75;
+    font-style: italic;
+}
+
+.preview-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 20px;
+    max-width: 900px;
+    margin: 0 auto;
+}
+
+.preview-item {
+    text-align: center;
+}
+
+.preview-item h4 {
+    font-size: 16px;
+    color: #667eea;
+    margin-bottom: 15px;
+    font-weight: 600;
 }
 
 .banner-preview-wrapper {
+    overflow: hidden;
+    border: 2px solid #ddd;
+    border-radius: 12px;
     background: #f5f5f5;
     box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    aspect-ratio: 19 / 9;
+    width: 100%;
+}
+
+.banner-preview {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+@media (max-width: 1024px) {
+    .banner-info-grid,
+    .preview-grid {
+        grid-template-columns: 1fr;
+    }
 }
 </style>
 
@@ -48,7 +150,8 @@
 function initBannerPreview() {
     const imageInput = document.getElementById('banner-image-input');
     const previewContainer = document.getElementById('banner-preview-container');
-    const previewImage = document.getElementById('banner-preview');
+    const previewImages = document.querySelectorAll('.banner-preview');
+    const dimensionsDisplay = document.getElementById('banner-dimensions-display');
     
     if (imageInput) {
         imageInput.addEventListener('change', function(e) {
@@ -61,17 +164,22 @@ function initBannerPreview() {
                     const img = new Image();
                     
                     img.onload = function() {
-                        // Mostrar vista previa
-                        previewImage.src = event.target.result;
+                        // Mostrar en la vista previa
+                        previewImages.forEach(previewImg => {
+                            previewImg.src = event.target.result;
+                        });
                         previewContainer.style.display = 'block';
                         
-                        // Calcular proporción
-                        const ratio = (img.width / img.height).toFixed(2);
-                        const optimalRatio = (16 / 5).toFixed(2);
+                        // Calcular relación de aspecto
+                        const aspectRatio = (img.width / img.height).toFixed(2);
+                        const isCorrectRatio = Math.abs(aspectRatio - 2.11) < 0.1; // 19/9 = 2.11
                         
-                        // Mostrar dimensiones
-                        let message = `📏 Dimensiones de la imagen: ${img.width} x ${img.height} píxeles (Proporción ${ratio}:1)`;
-                        
+                        // Mostrar dimensiones originales
+                        dimensionsDisplay.innerHTML = `
+                            📏 <strong>Dimensiones:</strong> ${img.width} x ${img.height} píxeles | 
+                            <strong>Relación:</strong> ${aspectRatio}:1 
+                            ${isCorrectRatio ? '✅' : '⚠️ (Recomendado: 19:9 = 2.11:1)'}
+                        `;
                     };
                     
                     img.src = event.target.result;

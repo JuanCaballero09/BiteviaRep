@@ -1,0 +1,333 @@
+<section>
+  <div style="margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center;">
+    <%= link_to "← Volver a Sedes", dashboard_sedes_path, class: "btn-volver" %>
+    <div>
+      <%= link_to "✏️ Editar", edit_dashboard_sede_path(@sede), class: "btn-editar-show" %>
+      <%= button_to "🗑️ Eliminar", dashboard_sede_path(@sede), method: :delete, 
+          data: { turbo_confirm: "¿Estás seguro de eliminar esta sede?" }, 
+          class: "btn-eliminar-show" %>
+    </div>
+  </div>
+
+  <div class="sede-detail-container">
+    <div class="sede-header">
+      <h2><%= @sede.nombre %></h2>
+      <% if @sede.activo %>
+        <span class="badge-activo">✓ Activa</span>
+      <% else %>
+        <span class="badge-inactivo">✗ Inactiva</span>
+      <% end %>
+    </div>
+
+    <div class="sede-info-grid">
+      <div class="info-card">
+        <h3>📍 Ubicación</h3>
+        <div class="info-item">
+          <span class="label">Departamento:</span>
+          <span class="value"><%= @sede.departamento %></span>
+        </div>
+        <div class="info-item">
+          <span class="label">Ciudad:</span>
+          <span class="value"><%= @sede.ciudad %></span>
+        </div>
+        <% if @sede.barrio.present? %>
+          <div class="info-item">
+            <span class="label">Barrio:</span>
+            <span class="value"><%= @sede.barrio %></span>
+          </div>
+        <% end %>
+        <div class="info-item">
+          <span class="label">Dirección:</span>
+          <span class="value"><%= @sede.direccion %></span>
+        </div>
+      </div>
+
+      <div class="info-card">
+        <h3>📞 Contacto</h3>
+        <div class="info-item">
+          <span class="label">Teléfono:</span>
+          <span class="value"><%= @sede.telefono || 'No especificado' %></span>
+        </div>
+        <% if @sede.latitud.present? && @sede.longitud.present? %>
+          <div class="info-item">
+            <span class="label">Coordenadas:</span>
+            <span class="value"><%= @sede.coordenadas %></span>
+          </div>
+        <% end %>
+      </div>
+    </div>
+
+    <% if @sede.latitud.present? && @sede.longitud.present? %>
+      <div class="map-section">
+        <h3>🗺️ Ubicación en Google Maps</h3>
+        <div id="map" style="height: 450px; border-radius: 12px; margin-top: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);"></div>
+        
+        <div class="map-actions">
+          <%= link_to "Ver en Google Maps", "https://www.google.com/maps?q=#{@sede.latitud},#{@sede.longitud}", 
+              target: "_blank", class: "btn-google-maps" %>
+          <%= link_to "Cómo llegar", "https://www.google.com/maps/dir/?api=1&destination=#{@sede.latitud},#{@sede.longitud}", 
+              target: "_blank", class: "btn-directions" %>
+        </div>
+      </div>
+    <% else %>
+      <div class="alert-warning">
+        ⚠️ Esta sede no tiene coordenadas. Edita la sede para geocodificarla automáticamente.
+      </div>
+    <% end %>
+
+    <div class="metadata">
+      <p><strong>Creada:</strong> <%= l(@sede.created_at, format: :long) %></p>
+      <p><strong>Última actualización:</strong> <%= l(@sede.updated_at, format: :long) %></p>
+    </div>
+  </div>
+</section>
+
+<style>
+.sede-detail-container {
+  max-width: 1100px;
+  margin: 0 auto;
+  background: white;
+  padding: 30px;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.sede-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 20px;
+  border-bottom: 3px solid #ED5821;
+  margin-bottom: 30px;
+}
+
+.sede-header h2 {
+  margin: 0;
+  color: #333;
+  font-size: 2rem;
+}
+
+.sede-info-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 25px;
+  margin-bottom: 30px;
+}
+
+.info-card {
+  background: #f8f9fa;
+  padding: 20px;
+  border-radius: 10px;
+  border-left: 4px solid #ED5821;
+}
+
+.info-card h3 {
+  margin: 0 0 15px 0;
+  color: #ED5821;
+  font-size: 1.2rem;
+}
+
+.info-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 10px 0;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.info-item:last-child {
+  border-bottom: none;
+}
+
+.info-item .label {
+  font-weight: 600;
+  color: #666;
+}
+
+.info-item .value {
+  color: #333;
+  text-align: right;
+}
+
+.map-section {
+  margin: 30px 0;
+}
+
+.map-section h3 {
+  color: #333;
+  margin-bottom: 10px;
+}
+
+.map-actions {
+  display: flex;
+  gap: 15px;
+  margin-top: 15px;
+}
+
+.btn-google-maps, .btn-directions {
+  flex: 1;
+  padding: 12px;
+  text-align: center;
+  text-decoration: none;
+  border-radius: 8px;
+  font-weight: 600;
+  transition: all 0.3s;
+}
+
+.btn-google-maps {
+  background: #4285f4;
+  color: white;
+}
+
+.btn-google-maps:hover {
+  background: #3367d6;
+}
+
+.btn-directions {
+  background: #34a853;
+  color: white;
+}
+
+.btn-directions:hover {
+  background: #2d8e47;
+}
+
+.alert-warning {
+  background: #fff3cd;
+  border: 1px solid #ffc107;
+  color: #856404;
+  padding: 15px;
+  border-radius: 8px;
+  margin: 20px 0;
+}
+
+.metadata {
+  margin-top: 30px;
+  padding-top: 20px;
+  border-top: 1px solid #e0e0e0;
+  color: #666;
+  font-size: 0.9rem;
+}
+
+.btn-volver {
+  display: inline-block;
+  padding: 10px 20px;
+  background: #6c757d;
+  color: white;
+  text-decoration: none;
+  border-radius: 6px;
+  font-weight: 500;
+  transition: background 0.3s;
+}
+
+.btn-volver:hover {
+  background: #5a6268;
+}
+
+.btn-editar-show {
+  display: inline-block;
+  padding: 10px 20px;
+  background: #ffc107;
+  color: #333;
+  text-decoration: none;
+  border-radius: 6px;
+  font-weight: 500;
+  margin-right: 10px;
+  transition: background 0.3s;
+}
+
+.btn-editar-show:hover {
+  background: #e0a800;
+}
+
+.btn-eliminar-show {
+  display: inline-block;
+  padding: 10px 20px;
+  background: #dc3545;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+
+.btn-eliminar-show:hover {
+  background: #c82333;
+}
+
+.badge-activo {
+  background: #10b981;
+  color: white;
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.badge-inactivo {
+  background: #ef4444;
+  color: white;
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+@media (max-width: 768px) {
+  .sede-info-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .sede-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 15px;
+  }
+  
+  .map-actions {
+    flex-direction: column;
+  }
+}
+</style>
+
+<% if @sede.latitud.present? && @sede.longitud.present? %>
+  <script>
+    function initMap() {
+      const location = { lat: <%= @sede.latitud %>, lng: <%= @sede.longitud %> };
+      const map = new google.maps.Map(document.getElementById("map"), {
+        zoom: 16,
+        center: location,
+        mapTypeControl: true,
+        streetViewControl: true,
+        fullscreenControl: true,
+      });
+      
+      const marker = new google.maps.Marker({
+        position: location,
+        map: map,
+        title: "<%= @sede.nombre %>",
+        animation: google.maps.Animation.DROP
+      });
+
+      const infoWindow = new google.maps.InfoWindow({
+        content: `
+          <div style="padding: 10px;">
+            <h3 style="margin: 0 0 10px 0; color: #ED5821;"><%= @sede.nombre %></h3>
+            <p style="margin: 5px 0;"><strong>📍</strong> <%= @sede.direccion_completa %></p>
+            <% if @sede.telefono.present? %>
+              <p style="margin: 5px 0;"><strong>📞</strong> <%= @sede.telefono %></p>
+            <% end %>
+          </div>
+        `
+      });
+
+      marker.addListener("click", () => {
+        infoWindow.open(map, marker);
+      });
+
+      // Abrir info window automáticamente
+      infoWindow.open(map, marker);
+    }
+  </script>
+  <script src="https://maps.googleapis.com/maps/api/js?key=<%= Rails.application.credentials.google_map[:key] %>&callback=initMap" async defer></script>
+<% end %>
