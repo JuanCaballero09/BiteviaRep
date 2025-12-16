@@ -31,8 +31,7 @@ window.imageLoaded = function(img) {
   wrapper.classList.remove("shimmer"); // quitar efecto shimmer
   wrapper.querySelector(".img-loader").style.display = "none";
   img.style.display = "block";
-  img.style.height = "auto";
-  wrapper.style.height = "auto";
+  wrapper.style.height = "100%";
 }
 
 window.imageError = function(img) {
@@ -41,6 +40,17 @@ window.imageError = function(img) {
   img.style.display = "block";
   img.src = "/images/LogoLogoText2.svg"; // fallback
 }
+
+// Verificar imágenes ya cargadas al refrescar la página
+document.addEventListener("turbo:load", function() {
+  const images = document.querySelectorAll('img[onload*="imageLoaded"]');
+  images.forEach((img) => {
+    // Si la imagen ya está cargada (desde caché), ejecutar imageLoaded
+    if (img.complete && img.naturalHeight !== 0) {
+      window.imageLoaded(img);
+    }
+  });
+});
 
 // ========================================
 // 💵 Ajuste valor segun porcentaje o fijo (show)
@@ -166,23 +176,32 @@ document.addEventListener("turbo:load", function() {
     el.innerText = formatear(precioFinal, locale, currency);
   });
 
-  // precio total de un producto
-  document.querySelectorAll(".precio-total").forEach(el => {
-    const precio = parseFloat(el.dataset.precio);
-    const cantidad = parseInt(el.dataset.cantidad, 10) || 1;
-    const locale = el.dataset.locale;
-    let subtotal = precio * cantidad;
-    let currency;
+  // Función para formatear todos los precios
+  function formatearTodosLosPrecios() {
+    // precio total de un producto
+    document.querySelectorAll(".precio-total").forEach(el => {
+      const precio = parseFloat(el.dataset.precio);
+      const cantidad = parseInt(el.dataset.cantidad, 10) || 1;
+      const locale = el.dataset.locale;
+      let subtotal = precio * cantidad;
+      let currency;
 
-    if (locale === "en") {
-      subtotal = subtotal / cambioDinero;
-      currency = "USD";
-    } else {
-      currency = "COP";
-    }
+      if (locale === "en") {
+        subtotal = subtotal / cambioDinero;
+        currency = "USD";
+      } else {
+        currency = "COP";
+      }
 
-    el.innerText = formatear(subtotal,locale, currency);
-  });
+      el.innerText = formatear(subtotal, locale, currency);
+    });
+  }
+
+  // Formatear precios al cargar
+  formatearTodosLosPrecios();
+
+  // Escuchar evento personalizado para reformatear
+  document.addEventListener('formatear-precios', formatearTodosLosPrecios);
 
   // precio total del carrito
   const totalCarrito = document.getElementById("precio-total");
@@ -356,9 +375,19 @@ document.addEventListener("turbo:load", function () {
         .then(data => {
           console.log("Producto agregado al carrito", data);
 
-          const contador = document.getElementById("contador-carrito");
-          if (contador && data.total_productos !== undefined) {
-            contador.textContent = data.total_productos;
+          // Actualizar todos los contadores de carrito
+          if (data.total_productos !== undefined) {
+            document.querySelectorAll('.contador-carrito').forEach(contador => {
+              contador.textContent = data.total_productos;
+            });
+            document.querySelectorAll('.sidebar-badge').forEach(badge => {
+              if (data.total_productos > 0) {
+                badge.textContent = data.total_productos;
+                badge.style.display = '';
+              } else {
+                badge.style.display = 'none';
+              }
+            });
           }
         })
         .catch(error => {
@@ -368,30 +397,6 @@ document.addEventListener("turbo:load", function () {
     });
   }
 });
-
-
-// ========================================================
-// 🛒 LÓGICA CONTADOR CARRITO: Mostrar cuantos productos hay
-// ========================================================
-
-function agregarAlCarrito(producto_id) {
-  const productoId = producto_id;
-  if (!productoId) return;
-
-  fetch('/agregar_al_carrito?producto_id=${productoId}', {
-    method:  'POST',
-    headers:{
-      'X-CSRF-Token' : document.querySelector('[name ="csrf-token"]').content
-    } 
-  })
-
-  .then(Response => response.json())
-  .then(data => {
-    if (data.status == ok){
-      document.getElementById("contador-carrito").textContent = `🛒 Carrito (${data.total_productos})`;
-    }
-  });
-}
 
 // ==============================
 // 🎞️ Función para el banner

@@ -23,6 +23,9 @@
     </head>
 
     <body>
+      <!-- Hidden element for Turbo Stream counter updates -->
+      <div id="contador-carrito-update" style="display: none;"></div>
+      
       <header class="header">
         <div class="logo">
             <%= image_tag "LogoLogo.svg" %>
@@ -51,6 +54,7 @@
               <%= link_to t("home.navbar.inicio"), root_path %>
               <%= link_to t("home.navbar.menu"), products_path %>
               <%= link_to t("home.navbar.categorias"), grupos_path %>
+              <%= link_to "Rastrear Pedido", order_tracking_index_path %>
 
               <% if current_user %>
                 <% if current_user.admin? or current_user.empleado? %>
@@ -77,7 +81,7 @@
                   
                   <%= link_to carrito_path do %> 
                     <%= image_tag("icons/cart-shopping-solid.svg", alt: "Carrito") %>
-                    <span id="contador-carrito"><%= total %></span>
+                    <span class="contador-carrito"><%= total %></span>
                   <% end %>
                   
                   <%= link_to image_tag("icons/user-solid.svg", alt: "Perfil"), clientes_path %>
@@ -88,10 +92,11 @@
                 </div>
               <% else %>
                 <div class="user">
-                  <% total = session[:carrito]&.sum { |p| p["cantidad"] } || 0 %>
+                  <% carrito = Carrito.find_by(id: session[:carrito_id]) %>
+                  <% total = carrito&.carrito_items&.sum(:cantidad) || 0 %>
                   <%= link_to carrito_path do %>
                     <%= image_tag("icons/cart-shopping-solid.svg", alt: "Carrito") %>
-                    <span id="contador-carrito"><%= total %></span>
+                    <span class="contador-carrito"><%= total %></span>
                   <% end %>
                   
                   <div class="btn-user">
@@ -136,6 +141,10 @@
                 <%= image_tag "icons/list-solid-full.svg", class: "sidebar-icon" %>
                 <span><%= t("home.navbar.categorias") %></span>
               <% end %>
+              <%= link_to order_tracking_index_path, class: "sidebar-link" do %>
+                <%= image_tag "icons/magnifying-glass-solid.svg", class: "sidebar-icon" %>
+                <span>Rastrear Pedido</span>
+              <% end %>
               <% if current_user %>
                 <% if current_user.admin? or current_user.empleado? %>
                   <%= link_to dashboard_root_path, class: "sidebar-link" do %>
@@ -151,6 +160,7 @@
           <div class="sidebar-section">
             <h3 class="sidebar-section-title">Cuenta</h3>
             <div class="sidebar-user">
+              
               <% if current_user %>
                 <% carrito = Carrito.find_by(id: session[:carrito_id]) %>
                 <% total = carrito&.carrito_items&.sum(:cantidad) || 0 %>
@@ -173,8 +183,8 @@
                   <span><%= t("home.navbar.cerrar_sesion") %></span>
                 <% end %>
               <% else %>
-                <% total = session[:carrito]&.sum { |p| p["cantidad"] } || 0 %>
-                
+                <% carrito = Carrito.find_by(id: session[:carrito_id]) %>
+                <% total = carrito&.carrito_items&.sum(:cantidad) || 0 %>
                 <%= link_to carrito_path, class: "sidebar-link" do %>
                   <%= image_tag "icons/cart-shopping-solid.svg", class: "sidebar-icon" %>
                   <span>Carrito</span>

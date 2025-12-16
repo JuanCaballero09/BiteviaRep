@@ -48,6 +48,41 @@
     <% end %>
   </div>
 
+<script>
+(function() {
+    'use strict';
+    
+    function initCarousel() {
+        const carousel = document.getElementById('heroCarousel');
+        if (!carousel) return;
+        
+        // Destruir instancia previa si existe
+        const existingInstance = bootstrap.Carousel.getInstance(carousel);
+        if (existingInstance) {
+            existingInstance.dispose();
+        }
+        
+        // Crear nueva instancia
+        new bootstrap.Carousel(carousel, {
+            interval: 3000,
+            ride: 'carousel',
+            pause: 'hover',
+            wrap: true
+        });
+    }
+    
+    // Ejecutar solo una vez
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initCarousel);
+    } else {
+        initCarousel();
+    }
+    
+    // Para Turbo
+    document.addEventListener('turbo:load', initCarousel);
+})();
+</script>
+
 
   <!-- Sección de Combos Premium -->
   <section class="combos-premium">

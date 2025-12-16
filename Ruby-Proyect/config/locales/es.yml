@@ -83,7 +83,8 @@ es:
       ingredientes: "Ingredientes"
       ver_ingredientes: "Ver ingredientes"
       crear_ingrediente: "Crear ingrediente"
-      volver_al_inicio: "Volver al inicio"  
+      volver_al_inicio: "Volver al inicio"
+      sedes: "Sedes"
 
       # Titulos de las tarjetas de las graficas
 

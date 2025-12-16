@@ -1,7 +1,7 @@
 <section>
   <div style="margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center;">
     <%= link_to "← Volver a Sedes", dashboard_sedes_path, class: "btn-volver" %>
-    <div>
+    <div style="display: flex; flex-direction: row;">
       <%= link_to "✏️ Editar", edit_dashboard_sede_path(@sede), class: "btn-editar-show" %>
       <%= button_to "🗑️ Eliminar", dashboard_sede_path(@sede), method: :delete, 
           data: { turbo_confirm: "¿Estás seguro de eliminar esta sede?" }, 

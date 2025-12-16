@@ -1,5 +1,13 @@
 <div class="form-container">
-  <%= form_with model: [:dashboard, sede], local: true, html: { class: "sede-form" } do |f| %>
+  <!-- Mapa interactivo primero -->
+  <div class="map-section">
+    <h3>📍 Ubicación de la Sede</h3>
+    <p class="map-instruction">Arrastra el mapa para ubicar el marcador en la ubicación exacta de la sede</p>
+    <div id="map" style="height: 450px; border-radius: 8px; margin-top: 10px; border: 2px solid #e0e0e0;"></div>
+    <p class="map-hint">💡 También puedes ingresar la dirección abajo y el mapa se actualizará automáticamente</p>
+  </div>
+
+  <%= form_with model: [:dashboard, sede], local: true, html: { class: "sede-form", id: "sede-form" } do |f| %>
     <% if sede.errors.any? %>
       <div class="error-messages">
         <h3>❌ <%= pluralize(sede.errors.count, "error") %> impidieron guardar esta sede:</h3>
@@ -14,19 +22,19 @@
     <div class="form-grid">
       <div class="form-group">
         <%= f.label :nombre, "Nombre de la Sede *" %>
-        <%= f.text_field :nombre, class: "form-control", placeholder: "Ej: Sede Principal", required: true %>
+        <%= f.text_field :nombre, class: "form-control", placeholder: "Ej: Sede Principal", required: true, id: "sede_nombre" %>
       </div>
 
       <div class="form-group">
         <%= f.label :telefono, "Teléfono" %>
-        <%= f.text_field :telefono, class: "form-control", placeholder: "Ej: +57 300 123 4567" %>
+        <%= f.text_field :telefono, class: "form-control", placeholder: "Ej: +57 300 123 4567", id: "sede_telefono" %>
       </div>
     </div>
 
     <div class="form-grid">
       <div class="form-group">
         <%= f.label :departamento, "Departamento *" %>
-        <%= f.text_field :departamento, class: "form-control", placeholder: "Ej: Atlántico", required: true, list: "departamentos-list" %>
+        <%= f.text_field :departamento, class: "form-control", placeholder: "Ej: Atlántico", required: true, list: "departamentos-list", id: "sede_departamento" %>
         <datalist id="departamentos-list">
           <option value="Atlántico">
           <option value="Bolívar">
@@ -41,32 +49,32 @@
 
       <div class="form-group">
         <%= f.label :ciudad, "Ciudad *" %>
-        <%= f.text_field :ciudad, class: "form-control", placeholder: "Ej: Barranquilla", required: true %>
+        <%= f.text_field :ciudad, class: "form-control", placeholder: "Ej: Barranquilla", required: true, id: "sede_ciudad" %>
       </div>
     </div>
 
     <div class="form-group">
       <%= f.label :barrio, "Barrio" %>
-      <%= f.text_field :barrio, class: "form-control", placeholder: "Ej: Ciudadela Metropolitana" %>
+      <%= f.text_field :barrio, class: "form-control", placeholder: "Ej: Ciudadela Metropolitana", id: "sede_barrio" %>
     </div>
 
     <div class="form-group">
       <%= f.label :direccion, "Dirección Completa *" %>
-      <%= f.text_area :direccion, class: "form-control", rows: 2, placeholder: "Ej: Calle 55B #7A-28", required: true %>
+      <%= f.text_area :direccion, class: "form-control", rows: 2, placeholder: "Ej: Calle 55B #7A-28", required: true, id: "sede_direccion" %>
       <small class="form-hint">Esta dirección se usará para geocodificar automáticamente con Google Maps</small>
     </div>
 
     <div class="form-grid">
       <div class="form-group">
         <%= f.label :latitud, "Latitud" %>
-        <%= f.number_field :latitud, step: 0.000001, class: "form-control", placeholder: "Se calculará automáticamente" %>
-        <small class="form-hint">Opcional: se calcula automáticamente</small>
+        <%= f.number_field :latitud, step: 0.000001, class: "form-control", placeholder: "Se calculará automáticamente", readonly: true, id: "sede_latitud" %>
+        <small class="form-hint">Se actualiza automáticamente al mover el mapa</small>
       </div>
 
       <div class="form-group">
         <%= f.label :longitud, "Longitud" %>
-        <%= f.number_field :longitud, step: 0.000001, class: "form-control", placeholder: "Se calculará automáticamente" %>
-        <small class="form-hint">Opcional: se calcula automáticamente</small>
+        <%= f.number_field :longitud, step: 0.000001, class: "form-control", placeholder: "Se calculará automáticamente", readonly: true, id: "sede_longitud" %>
+        <small class="form-hint">Se actualiza automáticamente al mover el mapa</small>
       </div>
     </div>
 
@@ -82,13 +90,6 @@
       <%= link_to "Cancelar", dashboard_sedes_path, class: "btn-cancel" %>
     </div>
   <% end %>
-
-  <% if sede.persisted? && sede.latitud.present? && sede.longitud.present? %>
-    <div class="map-preview">
-      <h3>📍 Ubicación en el Mapa</h3>
-      <div id="map" style="height: 400px; border-radius: 8px; margin-top: 10px;"></div>
-    </div>
-  <% end %>
 </div>
 
 <style>
@@ -99,6 +100,46 @@
   padding: 30px;
   border-radius: 12px;
   box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.map-section {
+  margin-bottom: 30px;
+  padding-bottom: 30px;
+  border-bottom: 2px solid #f0f0f0;
+}
+
+.map-section h3 {
+  color: #333;
+  margin-bottom: 10px;
+}
+
+.map-instruction {
+  color: #666;
+  font-size: 0.95rem;
+  margin-bottom: 15px;
+}
+
+.map-hint {
+  margin-top: 10px;
+  color: #ED5821;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+#map {
+  position: relative;
+}
+
+#map::after {
+  content: '📍';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -100%);
+  font-size: 2.5rem;
+  pointer-events: none;
+  z-index: 1;
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
 }
 
 .sede-form {
@@ -154,6 +195,11 @@
   outline: none;
   border-color: #ED5821;
   box-shadow: 0 0 0 3px rgba(237, 88, 33, 0.1);
+}
+
+.form-control[readonly] {
+  background-color: #f5f5f5;
+  cursor: not-allowed;
 }
 
 .form-hint {
@@ -217,17 +263,6 @@
   background: #5a6268;
 }
 
-.map-preview {
-  margin-top: 30px;
-  padding-top: 30px;
-  border-top: 2px solid #f0f0f0;
-}
-
-.map-preview h3 {
-  margin-bottom: 15px;
-  color: #333;
-}
-
 @media (max-width: 768px) {
   .form-grid {
     grid-template-columns: 1fr;
@@ -239,20 +274,168 @@
 }
 </style>
 
-<% if sede.persisted? && sede.latitud.present? && sede.longitud.present? %>
-  <script>
-    function initMap() {
-      const location = { lat: <%= sede.latitud %>, lng: <%= sede.longitud %> };
-      const map = new google.maps.Map(document.getElementById("map"), {
-        zoom: 15,
-        center: location,
-      });
-      const marker = new google.maps.Marker({
-        position: location,
-        map: map,
-        title: "<%= sede.nombre %>"
+<script>
+let map;
+let geocoder;
+let debounceTimer;
+
+function initMap() {
+  // Obtener valores iniciales del formulario o usar Barranquilla como default
+  const latInput = document.getElementById('sede_latitud');
+  const lngInput = document.getElementById('sede_longitud');
+  
+  const initialLat = latInput.value ? parseFloat(latInput.value) : 10.9685;
+  const initialLng = lngInput.value ? parseFloat(lngInput.value) : -74.7813;
+  
+  const initialLocation = { lat: initialLat, lng: initialLng };
+  
+  // Crear el mapa
+  map = new google.maps.Map(document.getElementById("map"), {
+    zoom: 15,
+    center: initialLocation,
+    mapTypeControl: true,
+    streetViewControl: true,
+    fullscreenControl: true,
+    zoomControl: true,
+  });
+  
+  // Inicializar geocoder
+  geocoder = new google.maps.Geocoder();
+  
+  // Actualizar coordenadas cuando el mapa se mueve
+  map.addListener('center_changed', function() {
+    const center = map.getCenter();
+    latInput.value = center.lat().toFixed(6);
+    lngInput.value = center.lng().toFixed(6);
+  });
+  
+  // Geocodificación inversa cuando el mapa deja de moverse
+  map.addListener('idle', function() {
+    const center = map.getCenter();
+    geocodeLatLng(center.lat(), center.lng());
+  });
+  
+  // Escuchar cambios en los campos del formulario
+  const addressFields = ['sede_direccion', 'sede_ciudad', 'sede_departamento', 'sede_barrio'];
+  addressFields.forEach(fieldId => {
+    const field = document.getElementById(fieldId);
+    if (field) {
+      field.addEventListener('input', function() {
+        clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(() => {
+          geocodeAddress();
+        }, 1000); // Esperar 1 segundo después de que el usuario deje de escribir
       });
     }
-  </script>
-  <script src="https://maps.googleapis.com/maps/api/js?key=<%= Rails.application.credentials.google_map[:key] %>&callback=initMap" async defer></script>
-<% end %>
+  });
+}
+
+// Geocodificar dirección a coordenadas (Formulario -> Mapa)
+function geocodeAddress() {
+  const direccion = document.getElementById('sede_direccion').value;
+  const ciudad = document.getElementById('sede_ciudad').value;
+  const departamento = document.getElementById('sede_departamento').value;
+  const barrio = document.getElementById('sede_barrio').value;
+  
+  if (!direccion || !ciudad) return;
+  
+  // Construir dirección completa
+  let fullAddress = direccion;
+  if (barrio) fullAddress += ', ' + barrio;
+  fullAddress += ', ' + ciudad + ', ' + departamento + ', Colombia';
+  
+  geocoder.geocode({ address: fullAddress }, function(results, status) {
+    if (status === 'OK' && results[0]) {
+      const location = results[0].geometry.location;
+      map.setCenter(location);
+      map.setZoom(17);
+      
+      // Los listeners del mapa actualizarán automáticamente los campos de lat/lng
+      console.log('📍 Dirección geocodificada:', fullAddress);
+    } else {
+      console.log('❌ Geocodificación fallida:', status);
+    }
+  });
+}
+
+// Geocodificación inversa: coordenadas a dirección (Mapa -> Formulario)
+function geocodeLatLng(lat, lng) {
+  const latlng = { lat: lat, lng: lng };
+  
+  geocoder.geocode({ location: latlng }, function(results, status) {
+    if (status === 'OK' && results[0]) {
+      console.log('🔍 Resultados de geocodificación:', results);
+      
+      const addressComponents = results[0].address_components;
+      
+      // Extraer componentes de la dirección
+      let calle = '';
+      let numero = '';
+      let barrio = '';
+      let ciudad = '';
+      let departamento = '';
+      
+      addressComponents.forEach(component => {
+        const types = component.types;
+        
+        if (types.includes('street_number')) {
+          numero = component.long_name;
+        }
+        if (types.includes('route')) {
+          calle = component.long_name;
+        }
+        if (types.includes('sublocality_level_1') || types.includes('sublocality')) {
+          barrio = component.long_name;
+        }
+        if (types.includes('neighborhood') && !barrio) {
+          barrio = component.long_name;
+        }
+        if (types.includes('locality')) {
+          ciudad = component.long_name;
+        }
+        if (types.includes('administrative_area_level_1')) {
+          departamento = component.long_name;
+        }
+      });
+      
+      // Construir dirección completa
+      let direccionCompleta = '';
+      if (calle) {
+        direccionCompleta = calle;
+        if (numero) {
+          direccionCompleta = calle + ' ' + numero;
+        }
+      }
+      
+      // Actualizar formulario (ahora SÍ actualiza aunque tengan contenido)
+      const direccionField = document.getElementById('sede_direccion');
+      const barrioField = document.getElementById('sede_barrio');
+      const ciudadField = document.getElementById('sede_ciudad');
+      const departamentoField = document.getElementById('sede_departamento');
+      
+      if (direccionCompleta) {
+        direccionField.value = direccionCompleta;
+      }
+      if (barrio) {
+        barrioField.value = barrio;
+      }
+      if (ciudad) {
+        ciudadField.value = ciudad;
+      }
+      if (departamento) {
+        departamentoField.value = departamento;
+      }
+      
+      console.log('✅ Formulario actualizado:', {
+        direccion: direccionCompleta,
+        barrio: barrio,
+        ciudad: ciudad,
+        departamento: departamento
+      });
+    } else {
+      console.log('❌ Geocodificación inversa falló:', status);
+    }
+  });
+}
+</script>
+<script src="https://maps.googleapis.com/maps/api/js?key=<%= Rails.application.credentials.google_map[:key] %>&callback=initMap" async defer></script>

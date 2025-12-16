@@ -8,9 +8,22 @@
   </turbo-stream>
 <% end %>
 
-<turbo-stream action="update" target="contador-carrito">
+<turbo-stream action="update" target="contador-carrito-update">
   <template>
-    <%= @carrito.carrito_items.sum(:cantidad) %>
+    <script>
+      document.querySelectorAll('.contador-carrito').forEach(el => {
+        el.textContent = '<%= @carrito.carrito_items.sum(:cantidad) %>';
+      });
+      document.querySelectorAll('.sidebar-badge').forEach(el => {
+        const total = parseInt('<%= @carrito.carrito_items.sum(:cantidad) %>');
+        if (total > 0) {
+          el.textContent = total;
+          el.style.display = '';
+        } else {
+          el.style.display = 'none';
+        }
+      });
+    </script>
   </template>
 </turbo-stream>
 
