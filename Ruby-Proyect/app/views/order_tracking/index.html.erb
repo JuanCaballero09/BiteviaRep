@@ -1,0 +1,162 @@
+<% content_for :head do %>
+  <%= stylesheet_link_tag "order_tracking", "data-turbo-track": "reload" %>
+<% end %>
+
+<div class="order-tracking-container">
+  <div class="tracking-header">
+    <div class="container-fluid">
+      <div class="tracking-header-content">
+        <div class="tracking-icon">
+          <i class="fa-solid fa-magnifying-glass-location"></i>
+        </div>
+        <div>
+          <h1 class="tracking-title">Rastrear mi Pedido</h1>
+          <p class="tracking-subtitle">Consulta el estado de tu orden ingresando tu correo o código de pedido</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="tracking-content">
+    <div class="container-fluid">
+      <div class="search-section">
+        <div class="search-card">
+          <%= form_with url: search_order_tracking_index_path, method: :get, class: "search-form" do |f| %>
+            <div class="search-type-selector">
+              <label class="search-type-option">
+                <%= radio_button_tag :search_type, 'code', true, class: 'search-type-radio' %>
+                <span class="search-type-label">
+                  <i class="fa-solid fa-barcode"></i>
+                  Código de Orden
+                </span>
+              </label>
+              
+              <label class="search-type-option">
+                <%= radio_button_tag :search_type, 'email', false, class: 'search-type-radio' %>
+                <span class="search-type-label">
+                  <i class="fa-solid fa-envelope"></i>
+                  Correo Electrónico
+                </span>
+              </label>
+            </div>
+            
+            <div class="search-input-group">
+              <%= text_field_tag :search_value, params[:search_value], 
+                  placeholder: "Ej: ORD-20251216-XXXXX o tu@email.com", 
+                  class: "search-input",
+                  required: true %>
+              <%= button_tag type: 'submit', class: 'search-button' do %>
+                <i class="fa-solid fa-search"></i>
+                <span>Buscar Pedido</span>
+              <% end %>
+            </div>
+            
+            <div class="search-help">
+              <p>
+                <i class="fa-solid fa-circle-info"></i>
+                <strong>Buscar por código:</strong> Usa el código que recibiste al hacer tu pedido (ej: ORD-20251216-XXXXX)
+              </p>
+              <p>
+                <i class="fa-solid fa-circle-info"></i>
+                <strong>Buscar por correo:</strong> Ingresa el correo electrónico que usaste al hacer tu pedido
+              </p>
+            </div>
+          <% end %>
+        </div>
+      </div>
+
+      <% if @orders.present? %>
+        <div class="results-section">
+          <div class="results-header">
+            <h2 class="results-title">
+              <i class="fa-solid fa-list"></i>
+              Resultados de Búsqueda
+            </h2>
+            <span class="results-count"><%= @orders.count %> <%= @orders.count == 1 ? 'orden encontrada' : 'órdenes encontradas' %></span>
+          </div>
+
+          <div class="orders-grid">
+            <% @orders.each do |order| %>
+              <div class="order-tracking-card">
+                <div class="order-card-header">
+                  <div class="order-code-section">
+                    <span class="order-code-label">Orden</span>
+                    <span class="order-code"><%= order.code %></span>
+                  </div>
+                  <div class="status-badge status-<%= order.status.downcase.gsub(' ', '-') %>">
+                    <%= order.status.humanize %>
+                  </div>
+                </div>
+
+                <div class="order-card-body">
+                  <div class="order-info-row">
+                    <div class="order-info-item">
+                      <i class="fa-solid fa-calendar"></i>
+                      <div>
+                        <span class="info-label">Fecha</span>
+                        <span class="info-value"><%= order.created_at.strftime("%d/%m/%Y %H:%M") %></span>
+                      </div>
+                    </div>
+
+                    <div class="order-info-item">
+                      <i class="fa-solid fa-user"></i>
+                      <div>
+                        <span class="info-label">Cliente</span>
+                        <span class="info-value"><%= order.customer_name %></span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="order-info-row">
+                    <div class="order-info-item">
+                      <i class="fa-solid fa-location-dot"></i>
+                      <div>
+                        <span class="info-label">Dirección</span>
+                        <span class="info-value"><%= truncate(order.direccion, length: 50) %></span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="order-total-row">
+                    <div class="total-breakdown">
+                      <% subtotal = order.total - (order.costo_domicilio || 0) %>
+                      <div class="total-line-small">
+                        <span>Productos:</span>
+                        <span class="precio-unitario" data-precio="<%= subtotal %>" data-locale="<%= I18n.locale %>"></span>
+                      </div>
+                      <% if order.costo_domicilio.present? && order.costo_domicilio > 0 %>
+                        <div class="total-line-small">
+                          <span>🚚 Domicilio:</span>
+                          <span class="precio-unitario" data-precio="<%= order.costo_domicilio %>" data-locale="<%= I18n.locale %>"></span>
+                        </div>
+                      <% end %>
+                    </div>
+                    <div class="total-final-tracking">
+                      <span class="total-label">Total:</span>
+                      <span class="total-value precio-unitario" data-precio="<%= order.total %>" data-locale="<%= I18n.locale %>"></span>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="order-card-footer">
+                  <%= link_to order_path(order.code), class: "btn-view-order" do %>
+                    <i class="fa-solid fa-eye"></i>
+                    Ver Detalles Completos
+                  <% end %>
+                </div>
+              </div>
+            <% end %>
+          </div>
+        </div>
+      <% elsif params[:search_value].present? %>
+        <div class="no-results">
+          <div class="no-results-icon">
+            <i class="fa-solid fa-magnifying-glass"></i>
+          </div>
+          <h3>No se encontraron resultados</h3>
+          <p>No hay órdenes que coincidan con tu búsqueda. Verifica que el <%= params[:search_type] == 'code' ? 'código' : 'correo' %> sea correcto.</p>
+        </div>
+      <% end %>
+    </div>
+  </div>
+</div>

@@ -68,7 +68,25 @@
         </table>
     </div>
 
-    <p class="order-total"><strong><%= t("home.carrito.total_pagar")%></strong> <%= number_to_currency(@order.total, unit: "COP ", separator: ",", delimiter: ".") %></p>
+    <div class="order-total-breakdown" style="margin: 20px auto; padding: 15px; background: #f8f9fa; border-radius: 8px; max-width: 400px;">
+      <% subtotal = @order.total - (@order.costo_domicilio || 0) %>
+      <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+        <span>Subtotal productos:</span>
+        <strong><%= number_to_currency(subtotal, unit: "COP ", separator: ",", delimiter: ".") %></strong>
+      </div>
+      
+      <% if @order.costo_domicilio.present? && @order.costo_domicilio > 0 %>
+        <div style="display: flex; justify-content: space-between; margin-bottom: 8px; color: #666;">
+          <span>🚚 Costo de domicilio:</span>
+          <strong><%= number_to_currency(@order.costo_domicilio, unit: "COP ", separator: ",", delimiter: ".") %></strong>
+        </div>
+      <% end %>
+      
+      <div style="border-top: 2px solid #dee2e6; padding-top: 10px; margin-top: 10px; display: flex; justify-content: space-between; font-size: 1.2em;">
+        <strong><%= t("home.carrito.total_pagar")%></strong>
+        <strong style="color: var(--base);"><%= number_to_currency(@order.total, unit: "COP ", separator: ",", delimiter: ".") %></strong>
+      </div>
+    </div>
 
     <% if @order.coupon.present? %>
         <p style="color: green; font-weight: bold;">

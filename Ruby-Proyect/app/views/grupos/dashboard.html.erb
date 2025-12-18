@@ -1,55 +1,88 @@
 <section class="dashboard-home-modern">
-  <!-- Hero Section con Bootstrap Carousel -->
-  <section class="hero-carousel">
-    <div id="heroCarousel" class="carousel slide" data-bs-ride="carousel" data-bs-interval="3000">
-      <div class="carousel-inner">
-        <% if Banner.any? %>
-          <% Banner.order(:id).each_with_index do |banner, index| %>
-            <% if banner.imagen.attached? %>
-              <div class="carousel-item <%= 'active' if index == 0 %>">
-                <%= image_tag banner.imagen, class: "d-block w-100 carousel-image", alt: "Banner #{index + 1}" %>
-              </div>
-            <% end %>
+  <!-- Hero Banner -->
+  <div id="heroCarousel" class="carousel slide mb-4" data-bs-ride="carousel" data-bs-interval="3000">
+    <div class="carousel-inner">
+      <% if Banner.any? %>
+        <% Banner.order(:id).each_with_index do |banner, index| %>
+          <% if banner.imagen.attached? %>
+            <div class="carousel-item <%= 'active' if index == 0 %>">
+              <%= image_tag banner.imagen, class: "d-block w-100 banner-img", alt: "Banner #{index + 1}" %>
+            </div>
           <% end %>
-        <% else %>
-          <div class="carousel-item active">
-            <%= image_tag "LogoLogoText.svg", class: "d-block w-100 carousel-image", alt: "Banner por defecto" %>
-          </div>
         <% end %>
-      </div>
-      
-      <!-- Contenido fijo del carousel -->
-      <div class="carousel-overlay-fixed">
-        <div class="carousel-content">
-          <h1 class="hero-title">Bienvenido a Bitevia</h1>
-          <p class="hero-subtitle">Descubre los sabores más deliciosos</p>
-          <%= link_to "Ver Menú", grupos_path, class: "hero-btn" %>
+      <% else %>
+        <div class="carousel-item active">
+          <%= image_tag "LogoLogoText.svg", class: "d-block w-100 banner-img", alt: "Banner por defecto" %>
         </div>
-      </div>
-      
-      <!-- Indicadores de Bootstrap -->
-      <div class="carousel-indicators">
-        <% banner_count = Banner.any? ? Banner.count : 1 %>
-        <% banner_count.times do |i| %>
-          <button type="button" data-bs-target="#heroCarousel" data-bs-slide-to="<%= i %>" 
-                  class="<%= 'active' if i == 0 %>" aria-current="<%= 'true' if i == 0 %>" 
-                  aria-label="Slide <%= i + 1 %>"></button>
-        <% end %>
-      </div>
-      
-      <!-- Controles de Bootstrap -->
-      <% if Banner.count > 1 %>
-        <button class="carousel-control-prev" type="button" data-bs-target="#heroCarousel" data-bs-slide="prev">
-          <span class="carousel-control-prev-icon" aria-hidden="true"></span>
-          <span class="visually-hidden">Anterior</span>
-        </button>
-        <button class="carousel-control-next" type="button" data-bs-target="#heroCarousel" data-bs-slide="next">
-          <span class="carousel-control-next-icon" aria-hidden="true"></span>
-          <span class="visually-hidden">Siguiente</span>
-        </button>
       <% end %>
     </div>
-  </section>
+    
+    <!-- Indicadores (punticos) -->
+    <% if Banner.any? %>
+      <div class="carousel-indicators">
+        <% Banner.order(:id).each_with_index do |banner, index| %>
+          <% if banner.imagen.attached? %>
+            <button type="button" data-bs-target="#heroCarousel" data-bs-slide-to="<%= index %>" 
+                    class="<%= 'active' if index == 0 %>" aria-current="<%= 'true' if index == 0 %>" 
+                    aria-label="Slide <%= index + 1 %>"></button>
+          <% end %>
+        <% end %>
+      </div>
+    <% else %>
+      <div class="carousel-indicators">
+        <button type="button" data-bs-target="#heroCarousel" data-bs-slide-to="0" 
+                class="active" aria-current="true" aria-label="Slide 1"></button>
+      </div>
+    <% end %>
+    
+    <!-- Controles Bootstrap -->
+    <% if Banner.count > 1 %>
+      <button class="carousel-control-prev" type="button" data-bs-target="#heroCarousel" data-bs-slide="prev">
+        <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+        <span class="visually-hidden">Anterior</span>
+      </button>
+      <button class="carousel-control-next" type="button" data-bs-target="#heroCarousel" data-bs-slide="next">
+        <span class="carousel-control-next-icon" aria-hidden="true"></span>
+        <span class="visually-hidden">Siguiente</span>
+      </button>
+    <% end %>
+  </div>
+
+<script>
+(function() {
+    'use strict';
+    
+    function initCarousel() {
+        const carousel = document.getElementById('heroCarousel');
+        if (!carousel) return;
+        
+        // Destruir instancia previa si existe
+        const existingInstance = bootstrap.Carousel.getInstance(carousel);
+        if (existingInstance) {
+            existingInstance.dispose();
+        }
+        
+        // Crear nueva instancia
+        new bootstrap.Carousel(carousel, {
+            interval: 3000,
+            ride: 'carousel',
+            pause: 'hover',
+            wrap: true
+        });
+    }
+    
+    // Ejecutar solo una vez
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initCarousel);
+    } else {
+        initCarousel();
+    }
+    
+    // Para Turbo
+    document.addEventListener('turbo:load', initCarousel);
+})();
+</script>
+
 
   <!-- Sección de Combos Premium -->
   <section class="combos-premium">

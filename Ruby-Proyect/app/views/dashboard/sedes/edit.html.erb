@@ -1,0 +1,26 @@
+<section>
+  <div style="margin-bottom: 20px;">
+    <%= link_to "← Volver a Sedes", dashboard_sedes_path, class: "btn-volver" %>
+  </div>
+  
+  <h2>Editar Sede: <%= @sede.nombre %></h2>
+  
+  <%= render 'form', sede: @sede %>
+</section>
+
+<style>
+.btn-volver {
+  display: inline-block;
+  padding: 10px 20px;
+  background: #6c757d;
+  color: white;
+  text-decoration: none;
+  border-radius: 6px;
+  font-weight: 500;
+  transition: background 0.3s;
+}
+
+.btn-volver:hover {
+  background: #5a6268;
+}
+</style>

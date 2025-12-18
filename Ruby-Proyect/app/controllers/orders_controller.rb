@@ -15,12 +15,16 @@ class OrdersController < ApplicationController
     end
 
     ActiveRecord::Base.transaction do
+      # Obtener costo de domicilio (debe venir del frontend)
+      costo_domicilio = params[:costo_domicilio].to_f || 0
+      
       if current_user
         # Usuario logueado
         @order = current_user.orders.build(
           status: :pendiente,
           total: 0,
-          direccion: params[:direccion]
+          direccion: params[:direccion],
+          costo_domicilio: costo_domicilio
         )
       else
         # Usuario invitado - validar datos requeridos
@@ -35,6 +39,7 @@ class OrdersController < ApplicationController
           status: :pendiente,
           total: 0,
           direccion: params[:direccion],
+          costo_domicilio: costo_domicilio,
           guest_nombre: params[:guest_nombre],
           guest_apellido: params[:guest_apellido],
           guest_telefono: params[:guest_telefono],
@@ -54,8 +59,10 @@ class OrdersController < ApplicationController
         )
       end
 
-      total = carrito.total
-      @order.update!(total: total)
+      # Calcular total: subtotal del carrito + costo de domicilio
+      subtotal_carrito = carrito.total
+      total_con_domicilio = subtotal_carrito + costo_domicilio
+      @order.update!(total: total_con_domicilio)
 
       if @order.coupon.present?
         resultado = @order.coupon.apply_to(current_user)
@@ -63,19 +70,21 @@ class OrdersController < ApplicationController
           raise ActiveRecord::Rollback, "No se pudo aplicar el cupón: #{resultado}"
         end
       end
-
-      # opcional: vaciar carrito después de crear la orden
-      carrito.carrito_items.destroy_all
-      carrito.update(coupon: nil)
-      session[:carrito_id] = nil
     end
 
-    # Redirigir al payment en lugar del show de la orden
-    redirect_to new_order_payments_path(@order.code)
+    # Vaciar carrito después de crear la orden exitosamente
+    carrito.carrito_items.destroy_all
+    carrito.update(coupon: nil)
+    session[:carrito_id] = nil
+
+    # Redirigir al payment usando el código de la orden
+    redirect_to new_order_payments_path(order_code: @order.code)
   rescue ActiveRecord::Rollback => e
     redirect_to carrito_path, alert: "No se pudo generar la orden: #{e.message}"
   rescue ActiveRecord::RecordInvalid => e
     redirect_to carrito_path, alert: "No se pudo generar la orden: #{e.record.errors.full_messages.join(', ')}"
+  rescue StandardError => e
+    redirect_to carrito_path, alert: "Error inesperado: #{e.message}"
   end
 
   def show

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_11_13_150240) do
+ActiveRecord::Schema[8.0].define(version: 2025_12_16_192626) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -98,6 +98,23 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_13_150240) do
     t.datetime "updated_at", null: false
   end
 
+  create_table "direccions", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.string "nombre"
+    t.text "direccion_completa"
+    t.string "barrio"
+    t.string "ciudad"
+    t.string "departamento"
+    t.string "codigo_postal"
+    t.decimal "latitud", precision: 10, scale: 6
+    t.decimal "longitud", precision: 10, scale: 6
+    t.boolean "principal", default: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["user_id", "principal"], name: "index_direccions_on_user_id_and_principal"
+    t.index ["user_id"], name: "index_direccions_on_user_id"
+  end
+
   create_table "grupos", force: :cascade do |t|
     t.string "nombre"
     t.datetime "created_at", null: false
@@ -145,6 +162,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_13_150240) do
     t.string "guest_apellido"
     t.string "guest_telefono"
     t.string "guest_email"
+    t.decimal "costo_domicilio", precision: 10, scale: 2, default: "0.0"
     t.index ["carrito_id"], name: "index_orders_on_carrito_id"
     t.index ["code"], name: "index_orders_on_code", unique: true
     t.index ["coupon_id"], name: "index_orders_on_coupon_id"
@@ -178,6 +196,21 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_13_150240) do
     t.string "type"
     t.index ["grupo_id"], name: "index_products_on_grupo_id"
     t.index ["type"], name: "index_products_on_type"
+  end
+
+  create_table "sedes", force: :cascade do |t|
+    t.string "nombre", null: false
+    t.string "departamento", null: false
+    t.string "ciudad", null: false
+    t.string "barrio"
+    t.string "direccion", null: false
+    t.decimal "latitud", precision: 10, scale: 6
+    t.decimal "longitud", precision: 10, scale: 6
+    t.string "telefono"
+    t.boolean "activo", default: true
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["activo"], name: "index_sedes_on_activo"
   end
 
   create_table "users", force: :cascade do |t|
@@ -214,6 +247,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_13_150240) do
   add_foreign_key "combo_items", "products", column: "combo_id"
   add_foreign_key "coupon_usages", "coupons"
   add_foreign_key "coupon_usages", "users"
+  add_foreign_key "direccions", "users"
   add_foreign_key "ingrediente_productos", "ingredientes"
   add_foreign_key "ingrediente_productos", "products"
   add_foreign_key "order_items", "orders"

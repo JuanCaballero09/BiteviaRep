@@ -119,7 +119,6 @@ function initializeNavbarEffects() {
     const style = document.createElement('style');
     style.textContent = `
         .navbar.scrolled {
-            background: linear-gradient(135deg, rgba(237, 88, 33, 0.95), rgba(157, 46, 6, 0.95));
             backdrop-filter: blur(15px);
             box-shadow: 0 12px 40px rgba(0, 0, 0, 0.2);
         }

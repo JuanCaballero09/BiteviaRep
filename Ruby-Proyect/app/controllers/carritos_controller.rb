@@ -5,6 +5,7 @@ class CarritosController < ApplicationController
     @items = @carrito&.carrito_items || []
     @total_productos = @items.sum(:cantidad)
     @total_precio = @items.sum(:precio)
+    @sedes = Sede.activas.order(:nombre)
   end 
 
   def aplicar_cupon

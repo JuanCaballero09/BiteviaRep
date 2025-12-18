@@ -1,93 +1,577 @@
-<section class= "perfil-cliente container py-4">
+<section class="perfil-cliente container py-4">
+    <!-- Encabezado del perfil con foto y nombre -->
     <div class="encabezado-perfil-cliente">
-        <div class= "info-cliente">
-            <%= image_tag('icons/user-solid.svg', class: "icono-usuario-perfil" )  %>
-            <h2><%= t("home.order.cliente")%> <%= current_user.nombre %> <%= current_user.apellido %> </h2>
-        </div>
-        
-        <div class = "acciones-cliente">
-            <label for="btn-modal" class="boton-modal"><%= t("home.clientes.editar_datos")%></label>
-            <%= button_to t("home.clientes.eliminar_cuenta"), registration_path(:user), class: "boton-modal" , method: :delete, data: { confirm: "¿Seguro que deseas eliminar tu cuenta?" } %>
-        </div>
-        
-        <% content_for :modals do %> 
-            <input type="checkbox" id="btn-modal">
-            <div class="modal-contenido">
-                <div class="contenido-modal-body">
-                    <h3><%= t("home.clientes.editar_datos")%></h3>
-                    <label for="btn-modal" class="cerrar-modal">X</label>
-
-                    <%= form_with(model: current_user, url: cliente_path(current_user), method: :patch, local: true) do |f| %>
-                        <label><%= t("home.clientes.nombre_cliente")%></label>
-                        <%= f.text_field :nombre %>
-
-                        <label><%= t("home.clientes.apellido_cliente")%></label>
-                        <%= f.text_field :apellido %>
-
-                        <label><%= t("home.clientes.telefono_cliente")%></label>
-                        <%= f.text_field :telefono %>
-
-                        <label><%= t("home.user.email")%></label>
-                        <%= f.email_field :email %>
-
-                        <label><%= t("home.clientes.contraseña_actual")%></label>
-                        <%= f.password_field :current_password %>
-
-                        <label><%= t("home.clientes.nueva_contraseña")%></label>
-                        <%= f.password_field :password %>
-
-                        <%= f.submit t("home.clientes.guardar_cambios") %>
-
-                    <% end %>
-                </div>
+        <div class="info-cliente">
+            <%= image_tag('icons/user-solid.svg', class: "icono-usuario-perfil") %>
+            <div>
+                <h2><%= current_user.nombre %> <%= current_user.apellido %></h2>
+                <p style="color: #666; margin: 5px 0 0 0;"><%= current_user.email %></p>
             </div>
-
-        <% end %>
+        </div>
+        
+        <div class="acciones-cliente">
+            <%= button_to t("home.clientes.eliminar_cuenta"), registration_path(:user), 
+                class: "boton-modal btn-eliminar-cuenta", 
+                method: :delete, 
+                data: { confirm: "¿Seguro que deseas eliminar tu cuenta? Esta acción no se puede deshacer." } %>
+        </div>
     </div>
 
-        <div class= "datos-personales-cliente">
-            <h3><%= t("home.clientes.datos_personales")%></h3>
-            <p><strong><%= t("home.clientes.nombre_cliente")%></strong> <%= current_user.nombre%></p>
-            <p><strong><%= t("home.clientes.apellido_cliente")%></strong> <%= current_user.apellido%></p>
-            <p><strong><%= t("home.clientes.telefono_cliente")%></strong> <%= current_user.telefono%></p>
-            <p><strong><%= t("home.clientes.email_cliente")%></strong> <%= current_user.email%></p>
+    <!-- Navegación por pestañas -->
+    <div class="perfil-tabs-navigation">
+        <button class="tab-button active" data-tab="datos">
+            <i class="fa-solid fa-user"></i>
+            <%= t("home.clientes.datos_personales") %>
+        </button>
+        <button class="tab-button" data-tab="ordenes">
+            <i class="fa-solid fa-receipt"></i>
+            <%= t("home.clientes.historial_pedidos") %>
+        </button>
+        <button class="tab-button" data-tab="direcciones">
+            <i class="fa-solid fa-location-dot"></i>
+            Mis Direcciones
+        </button>
+    </div>
+
+    <!-- Contenido de las pestañas -->
+    <div class="perfil-tabs-content">
+        
+        <!-- Pestaña: Mis Datos -->
+        <div class="tab-pane active" id="tab-datos">
+            <div class="datos-personales-cliente">
+                <div class="datos-header">
+                    <h3><%= t("home.clientes.datos_personales") %></h3>
+                    <button for="btn-modal" class="boton-modal btn-eliminar-cuenta">
+                        <i class="fa-solid fa-pen"></i>
+                        <%= t("home.clientes.editar_datos") %>
+                    </button>
+                </div>
+                
+                <div class="datos-grid">
+                    <div class="dato-item">
+                        <span class="dato-label"><%= t("home.clientes.nombre_cliente") %></span>
+                        <span class="dato-value"><%= current_user.nombre %></span>
+                    </div>
+                    <div class="dato-item">
+                        <span class="dato-label"><%= t("home.clientes.apellido_cliente") %></span>
+                        <span class="dato-value"><%= current_user.apellido %></span>
+                    </div>
+                    <div class="dato-item">
+                        <span class="dato-label"><%= t("home.clientes.telefono_cliente") %></span>
+                        <span class="dato-value"><%= current_user.telefono %></span>
+                    </div>
+                    <div class="dato-item">
+                        <span class="dato-label"><%= t("home.clientes.email_cliente") %></span>
+                        <span class="dato-value"><%= current_user.email %></span>
+                    </div>
+                </div>
+            </div>
         </div>
 
-    <div class="historial-pedidos">
-        <h3><%= t("home.clientes.historial_pedidos")%></h3>
-        <p><%= t("home.clientes.total_pedidos")%> <strong><%= @orders.count %></strong></p>
+        <!-- Pestaña: Mis Órdenes -->
+        <div class="tab-pane" id="tab-ordenes">
+            <div class="historial-pedidos">
+                <div class="datos-header">
+                    <h3><%= t("home.clientes.historial_pedidos") %></h3>
+                    <span class="badge-count"><%= @orders.count %> <%= @orders.count == 1 ? 'pedido' : 'pedidos' %></span>
+                </div>
 
-    <% if @orders.any? %>
-        <table class="tabla-pedidos">
-            <thead>
-                <tr>
-                    <th>ID</th>
-                    <th><%= t("home.ordenes.fecha")%></th>
-                    <th><%= t("home.clientes.estado")%></th>
-                    <th>TOTAL</th>
-                    <th><%= t("home.clientes.detalles")%></th>
-                </tr>
-            </thead>
-
-            <tbody>
-                <% @orders.each do |order| %>
-                    <tr>
-                        <td><%= order.id %></td>
-                            <td><%= order.created_at.strftime("%d/%m/%Y") %></td>
-                            <td><%= order.status.capitalize %></td>
-                            <td>
-                                <p class="precio-unitario" data-precio="<%= order.total %>" data-locale="<%= I18n.locale %>"style="color: #212529; font-size: 18px;">$</p>
-                            </td>
-                            <td>
-                            <%= link_to "Ver", order_path(order), class: "btn-eliminar", data: { order_id: order.id }, remote: true %>
-                        </td>
-                    </tr>
+                <% if @orders.any? %>
+                    <div class="tabla-responsive">
+                        <table class="tabla-pedidos">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th><%= t("home.ordenes.fecha") %></th>
+                                    <th><%= t("home.clientes.estado") %></th>
+                                    <th>TOTAL</th>
+                                    <th><%= t("home.clientes.detalles") %></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <% @orders.each do |order| %>
+                                    <tr>
+                                        <td><strong>#<%= order.code %></strong></td>
+                                        <td><%= order.created_at.strftime("%d/%m/%Y") %></td>
+                                        <td>
+                                            <span class="status-badge status-<%= order.status %>">
+                                                <%= order.status.capitalize %>
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <p class="precio-unitario" data-precio="<%= order.total %>" data-locale="<%= I18n.locale %>" style="color: #212529; font-weight: bold; margin: 0;">$</p>
+                                        </td>
+                                        <td>
+                                            <%= link_to order_path(order), class: "btn-ver-orden" do %>
+                                                Ver
+                                            <% end %>
+                                        </td>
+                                    </tr>
+                                <% end %>
+                            </tbody>
+                        </table>
+                    </div>
+                <% else %>
+                    <div class="empty-state">
+                        <i class="fa-solid fa-receipt" style="font-size: 4rem; color: #ccc;"></i>
+                        <p>No has realizado ningún pedido todavía.</p>
+                        <%= link_to products_path, class: "boton-modal btn-eliminar-cuenta" do %>
+                            <i class="fa-solid fa-utensils"></i>
+                            <%= t("home.carrito.explorar_productos") %>
+                        <% end %>
+                    </div>
                 <% end %>
-            </tbody>
-        </table>
-        <% else %>
-            <p>No has realizado ningún pedido todavía.</p>
-            <%= link_to t("home.carrito.explorar_productos"), products_path, class: "btn-explorar" %>
+            </div>
+        </div>
+
+        <!-- Pestaña: Mis Direcciones -->
+        <div class="tab-pane" id="tab-direcciones">
+            <div class="mis-direcciones">
+                <div class="datos-header">
+                    <h3>Mis Direcciones</h3>
+                    <button class="boton-modal btn-eliminar-cuenta" id="btn-nueva-direccion">
+                        <i class="fa-solid fa-plus"></i>
+                        Nueva Dirección
+                    </button>
+                </div>
+
+                <% if current_user.direccions.any? %>
+                    <div class="direcciones-grid">
+                        <% current_user.direccions.each do |direccion| %>
+                            <div class="direccion-card <%= 'principal' if direccion.principal? %>">
+                                <div class="direccion-header">
+                                    <h4>
+                                        <i class="fa-solid fa-location-dot"></i>
+                                        <%= direccion.nombre %>
+                                    </h4>
+                                    <% if direccion.principal? %>
+                                        <span class="badge-principal">Principal</span>
+                                    <% end %>
+                                </div>
+                                <p class="direccion-text"><%= direccion.direccion_formateada %></p>
+                                <div class="direccion-actions">
+                                    <% unless direccion.principal? %>
+                                        <%= button_to set_principal_direccion_path(direccion), 
+                                            method: :patch, 
+                                            class: "btn-secondary-small",
+                                            form: { data: { turbo: false } } do %>
+                                            Hacer principal
+                                        <% end %>
+                                    <% end %>
+                                    <%= button_to direccion_path(direccion), 
+                                        method: :delete, 
+                                        class: "btn-danger-small",
+                                        data: { confirm: "¿Eliminar esta dirección?" },
+                                        form: { data: { turbo: false } } do %>
+                                        <%= image_tag("icons/trash-solid-full.svg", alt: "basura", class: "basura-icon") %>
+                                    <% end %>
+                                </div>
+                            </div>
+                        <% end %>
+                    </div>
+                <% else %>
+                    <div class="empty-state">
+                        <i class="fa-solid fa-map-marker-alt" style="font-size: 4rem; color: #ccc;"></i>
+                        <p>No tienes direcciones guardadas.</p>
+                        <p style="color: #666; font-size: 0.9rem;">Agrega una dirección para hacer tus pedidos más rápido.</p>
+                    </div>
+                <% end %>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Modal para editar datos -->
+    <% content_for :modals do %> 
+        <input type="checkbox" id="btn-modal">
+        <div class="modal-contenido">
+            <div class="contenido-modal-body">
+                <h3><%= t("home.clientes.editar_datos") %></h3>
+                <label for="btn-modal" class="cerrar-modal">
+                    <i class="fa-solid fa-times"></i>
+                </label>
+
+                <%= form_with(model: current_user, url: cliente_path(current_user), method: :patch, local: true) do |f| %>
+                    <div class="form-group">
+                        <label><%= t("home.clientes.nombre_cliente") %></label>
+                        <%= f.text_field :nombre, class: "form-control" %>
+                    </div>
+
+                    <div class="form-group">
+                        <label><%= t("home.clientes.apellido_cliente") %></label>
+                        <%= f.text_field :apellido, class: "form-control" %>
+                    </div>
+
+                    <div class="form-group">
+                        <label><%= t("home.clientes.telefono_cliente") %></label>
+                        <%= f.text_field :telefono, class: "form-control" %>
+                    </div>
+
+                    <div class="form-group">
+                        <label><%= t("home.user.email") %></label>
+                        <%= f.email_field :email, class: "form-control" %>
+                    </div>
+
+                    <hr style="margin: 20px 0; border-color: #ddd;">
+                    <p style="color: #666; font-size: 0.9rem; margin-bottom: 15px;">
+                        <i class="fa-solid fa-info-circle"></i>
+                        Deja en blanco si no deseas cambiar tu contraseña
+                    </p>
+
+                    <div class="form-group">
+                        <label><%= t("home.clientes.contraseña_actual") %></label>
+                        <%= f.password_field :current_password, class: "form-control", autocomplete: "current-password" %>
+                    </div>
+
+                    <div class="form-group">
+                        <label><%= t("home.clientes.nueva_contraseña") %></label>
+                        <%= f.password_field :password, class: "form-control", autocomplete: "new-password" %>
+                    </div>
+
+                    <%= f.submit t("home.clientes.guardar_cambios"), class: "btn-primary" %>
+                <% end %>
+            </div>
+        </div>
     <% end %>
 </section>
+
+<style>
+/* Tabs Navigation */
+.perfil-tabs-navigation {
+    display: flex;
+    gap: 10px;
+    margin: 30px 0 20px;
+    border-bottom: 2px solid #e0e0e0;
+}
+
+.tab-button {
+    background: none;
+    border: none;
+    padding: 15px 25px;
+    font-size: 1rem;
+    font-weight: 500;
+    color: #666;
+    cursor: pointer;
+    border-bottom: 3px solid transparent;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.tab-button:hover {
+    color: var(--base, #ED5821);
+}
+
+.tab-button.active {
+    color: var(--base, #ED5821);
+    border-bottom-color: var(--base, #ED5821);
+}
+
+.tab-button i {
+    font-size: 1.1rem;
+}
+
+/* Tabs Content */
+.perfil-tabs-content {
+    margin-top: 20px;
+}
+
+.tab-pane {
+    display: none;
+    animation: fadeIn 0.3s ease;
+}
+
+.tab-pane.active {
+    display: block;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Datos Header */
+.datos-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 25px;
+}
+
+.datos-header h3 {
+    margin: 0;
+    color: #333;
+}
+
+/* Datos Grid */
+.datos-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 20px;
+}
+
+.dato-item {
+    background: #f8f9fa;
+    padding: 20px;
+    border-radius: 8px;
+    border-left: 4px solid var(--base, #ED5821);
+}
+
+.dato-label {
+    display: block;
+    font-size: 0.85rem;
+    color: #666;
+    margin-bottom: 5px;
+    font-weight: 500;
+}
+
+.dato-value {
+    display: block;
+    font-size: 1.1rem;
+    color: #333;
+    font-weight: 600;
+}
+
+/* Badge Count */
+.badge-count {
+    background: var(--base, #ED5821);
+    color: white;
+    padding: 8px 15px;
+    border-radius: 20px;
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+
+/* Status Badge */
+.status-badge {
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-transform: capitalize;
+}
+
+.status-badge.status-pendiente {
+    background: #fff3cd;
+    color: #856404;
+}
+
+.status-badge.status-en_preparacion {
+    background: #cfe2ff;
+    color: #084298;
+}
+
+.status-badge.status-terminado {
+    background: #d1e7dd;
+    color: #0f5132;
+}
+
+.status-badge.status-en_transito {
+    background: #e2d9f3;
+    color: #6f42c1;
+}
+
+.status-badge.status-entregado {
+    background: #d1e7dd;
+    color: #0a3622;
+}
+
+/* Botón Ver Orden */
+.btn-ver-orden {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 8px 15px;
+    background: var(--base, #ED5821);
+    color: white;
+    text-decoration: none;
+    border-radius: 5px;
+    font-size: 0.9rem;
+    transition: all 0.3s ease;
+}
+
+.btn-ver-orden:hover {
+    background: #d14817;
+    transform: translateY(-2px);
+}
+
+/* Direcciones Grid */
+.direcciones-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 20px;
+}
+
+.direccion-card {
+    background: white;
+    border: 2px solid #e0e0e0;
+    border-radius: 10px;
+    padding: 20px;
+    transition: all 0.3s ease;
+}
+
+.direccion-card.principal {
+    border-color: var(--base, #ED5821);
+    background: #fff5f0;
+}
+
+.direccion-card:hover {
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    transform: translateY(-2px);
+}
+
+.direccion-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.direccion-header h4 {
+    margin: 0;
+    color: #333;
+    font-size: 1.1rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.badge-principal {
+    background: var(--base, #ED5821);
+    color: white;
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.direccion-text {
+    color: #666;
+    margin: 10px 0;
+    line-height: 1.5;
+}
+
+.direccion-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 15px;
+}
+
+.btn-secondary-small, .btn-danger-small {
+    padding: 8px 12px;
+    border: none;
+    border-radius: 5px;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.btn-secondary-small {
+    background: #6c757d;
+    color: white;
+}
+
+.btn-secondary-small:hover {
+    background: #5a6268;
+}
+
+.btn-danger-small {
+    background: #dc3545;
+    color: white;
+}
+
+.btn-danger-small:hover {
+    background: #c82333;
+}
+
+/* Empty State */
+.empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: #666;
+}
+
+.empty-state p {
+    margin: 15px 0;
+    font-size: 1.1rem;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .perfil-tabs-navigation {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+    
+    .tab-button {
+        padding: 12px 15px;
+        font-size: 0.9rem;
+        white-space: nowrap;
+    }
+    
+    .datos-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .direcciones-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .datos-header {
+        flex-direction: column;
+        gap: 15px;
+        align-items: flex-start;
+    }
+    
+    .tabla-responsive {
+        overflow-x: auto;
+    }
+}
+</style>
+
+<script>
+document.addEventListener('turbo:load', function() {
+    // Manejo de tabs
+    const tabButtons = document.querySelectorAll('.tab-button');
+    const tabPanes = document.querySelectorAll('.tab-pane');
+    
+    tabButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const tabName = this.dataset.tab;
+            
+            // Remover clase active de todos los botones y panes
+            tabButtons.forEach(btn => btn.classList.remove('active'));
+            tabPanes.forEach(pane => pane.classList.remove('active'));
+            
+            // Agregar clase active al botón clickeado y su pane correspondiente
+            this.classList.add('active');
+            document.getElementById(`tab-${tabName}`).classList.add('active');
+            
+            // Guardar tab activo en localStorage
+            localStorage.setItem('activeTab', tabName);
+        });
+    });
+    
+    // Restaurar tab activo desde localStorage
+    const savedTab = localStorage.getItem('activeTab');
+    if (savedTab) {
+        const savedButton = document.querySelector(`[data-tab="${savedTab}"]`);
+        if (savedButton) {
+            savedButton.click();
+        }
+    }
+    
+    // Botón nueva dirección (por implementar)
+    const btnNuevaDireccion = document.getElementById('btn-nueva-direccion');
+    if (btnNuevaDireccion) {
+        btnNuevaDireccion.addEventListener('click', function() {
+            alert('Funcionalidad para agregar nueva dirección - Por implementar');
+        });
+    }
+});
+</script>
 

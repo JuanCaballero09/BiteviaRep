@@ -76,6 +76,7 @@ en:
       ver_ingredientes: "See Ingredients"
       crear_ingrediente: "Create Ingredient"
       volver_al_inicio: "Back to top"  
+      sedes: "Headquarters"
 
     graficas:        # Titulos de las tarjetas de las graficas
       total_producto: "Total products"

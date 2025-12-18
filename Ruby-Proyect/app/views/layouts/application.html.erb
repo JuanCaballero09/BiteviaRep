@@ -23,6 +23,9 @@
     </head>
 
     <body>
+      <!-- Hidden element for Turbo Stream counter updates -->
+      <div id="contador-carrito-update" style="display: none;"></div>
+      
       <header class="header">
         <div class="logo">
             <%= image_tag "LogoLogo.svg" %>
@@ -37,46 +40,48 @@
       </header>
 
       <nav class="navbar navbar-expand-lg nav-bar-dark bg-dark">
-        <div class= "container-fluid">
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
-              aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
-              <span class="navbar-toggler-icon"></span>
-            </button>
+        <div class="container-fluid">
+          <!-- Botón hamburguesa para móvil/tablet -->
+          <button class="mobile-menu-toggle" type="button" id="menuToggle" aria-label="Toggle navigation">
+            <span class="hamburger-line"></span>
+            <span class="hamburger-line"></span>
+            <span class="hamburger-line"></span>
+          </button>
             
-            <div class="collapse navbar-collapse slide-collapse" id="navbarNav">
-              <div class="links navbar-nav me-auto mb-2 mb-lg-0">
-                
-                <%= link_to t("home.navbar.inicio"), root_path %>
-                <%= link_to t("home.navbar.menu"), products_path %>
-                <%= link_to t("home.navbar.categorias"), grupos_path %>
+          <!-- Menú Desktop (oculto en móvil/tablet) -->
+          <div class="desktop-menu">
+            <div class="links navbar-nav">
+              <%= link_to t("home.navbar.inicio"), root_path %>
+              <%= link_to t("home.navbar.menu"), products_path %>
+              <%= link_to t("home.navbar.categorias"), grupos_path %>
+              <%= link_to "Rastrear Pedido", order_tracking_index_path %>
 
-                <% if current_user %>
-                  <% if current_user.admin? or current_user.empleado? %>
-                    <%= link_to t("home.navbar.panel_de_administracion"), dashboard_root_path%>
-                  <% end %>
+              <% if current_user %>
+                <% if current_user.admin? or current_user.empleado? %>
+                  <%= link_to t("home.navbar.panel_de_administracion"), dashboard_root_path%>
                 <% end %>
+              <% end %>
+            </div>
+            
+            <div style="display: flex; align-items: center; gap: 15px; justify-content: center;">
+              <% if I18n.locale == :es %>
+                <%= link_to url_for(locale: 'en'), style: "background-color: transparent; box-shadow: none;" do %>
+                  <%= image_tag "icons/estados-unidos-de-america.svg", class: "flag-icon", style: "width: 45px; height: 45px"%>
+                <% end %>
+              <% else %>
+                <%= link_to url_for(locale: 'es'), style: "background-color: transparent; box-shadow: none;" do %>
+                  <%= image_tag "icons/españa.svg", class: "flag-icon", style: "width: 45px; height: 45px"%>
+                <% end %>
+              <% end %>
 
-              </div>
-              <div style="display: flex; align-items: center; gap: 15px; justify-content: center;">
-
-                <% if I18n.locale == :es %>
-                    <%= link_to url_for(locale: 'en'), style: "background-color: transparent; box-shadow: none;" do %>
-                    <% image_tag "icons/estados-unidos-de-america.svg", class: "flag-icon", style: "width: 45px; height: 45px"%>
-                  <% end %>
-                  <% else %>
-                    <%= link_to url_for(locale: 'es'), style: "background-color: transparent; box-shadow: none;" do %>
-                    <%= image_tag "icons/españa.svg", class: "flag-icon", style: "width: 45px; height: 45px"%>
-                  <% end %>
-                <% end %>   
-
-            <% if current_user %>
+              <% if current_user %>
                 <div class="user">
                   <% carrito = Carrito.find_by(id: session[:carrito_id]) %>
                   <% total = carrito&.carrito_items&.sum(:cantidad) || 0 %>
-
+                  
                   <%= link_to carrito_path do %> 
                     <%= image_tag("icons/cart-shopping-solid.svg", alt: "Carrito") %>
-                    <span id="contador-carrito"><%= total %></span>
+                    <span class="contador-carrito"><%= total %></span>
                   <% end %>
                   
                   <%= link_to image_tag("icons/user-solid.svg", alt: "Perfil"), clientes_path %>
@@ -85,53 +90,218 @@
                     <%= button_to t("home.navbar.cerrar_sesion"), destroy_user_session_path, method: :delete, data: { turbo_confirm: "¿Estás seguro que quieres cerrar sesión?" } %>
                   </div>
                 </div>
-                <% else %>
-                  <div class="user">
-
-                    <% total = session[:carrito]&.sum { |p| p["cantidad"] } || 0 %>
-                    <%= link_to carrito_path do %>
+              <% else %>
+                <div class="user">
+                  <% carrito = Carrito.find_by(id: session[:carrito_id]) %>
+                  <% total = carrito&.carrito_items&.sum(:cantidad) || 0 %>
+                  <%= link_to carrito_path do %>
                     <%= image_tag("icons/cart-shopping-solid.svg", alt: "Carrito") %>
-                    <span id="contador-carrito"><%= total %></span>
-                <% end %>
-                
-                <div class="btn-user">
-                  <%= link_to new_user_session_path, class: "btn-user-login" do%>
-                    <%= image_tag("icons/user-solid.svg", alt: "Perfil") %>
+                    <span class="contador-carrito"><%= total %></span>
                   <% end %>
+                  
+                  <div class="btn-user">
+                    <%= link_to new_user_session_path, class: "btn-user-login" do%>
+                      <%= image_tag("icons/user-solid.svg", alt: "Perfil") %>
+                    <% end %>
+                  </div>
                 </div>
-              </div>
-            <% end %>
+              <% end %>
             </div>
           </div>
         </div>
       </nav>
+
+      <!-- Overlay para cerrar el menú -->
+      <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+      <!-- Sidebar para móvil/tablet -->
+      <div class="mobile-sidebar" id="mobileSidebar">
+        <div class="sidebar-header">
+          <%= image_tag "LogoLogo.svg", class: "sidebar-logo" %>
+          <h2>Bitevia</h2>
+          <button class="sidebar-close" id="sidebarClose" aria-label="Cerrar menú">
+            <span>×</span>
+          </button>
+        </div>
+
+        <div class="sidebar-content">
+          <!-- Enlaces de navegación -->
+          <div class="sidebar-section">
+            <h3 class="sidebar-section-title">Navegación</h3>
+            <nav class="sidebar-nav">
+              <%= link_to root_path, class: "sidebar-link" do %>
+                <%= image_tag "icons/house-solid-full.svg", class: "sidebar-icon" %>
+                <span><%= t("home.navbar.inicio") %></span>
+              <% end %>
+              <%= link_to products_path, class: "sidebar-link" do %>
+                <%= image_tag "icons/utensils-solid-full.svg", class: "sidebar-icon" %>
+                <span><%= t("home.navbar.menu") %></span>
+              <% end %>
+              <%= link_to grupos_path, class: "sidebar-link" do %>
+                <%= image_tag "icons/list-solid-full.svg", class: "sidebar-icon" %>
+                <span><%= t("home.navbar.categorias") %></span>
+              <% end %>
+              <%= link_to order_tracking_index_path, class: "sidebar-link" do %>
+                <%= image_tag "icons/magnifying-glass-solid.svg", class: "sidebar-icon" %>
+                <span>Rastrear Pedido</span>
+              <% end %>
+              <% if current_user %>
+                <% if current_user.admin? or current_user.empleado? %>
+                  <%= link_to dashboard_root_path, class: "sidebar-link" do %>
+                    <%= image_tag "icons/gauge-solid-full.svg", class: "sidebar-icon" %>
+                    <span><%= t("home.navbar.panel_de_administracion") %></span>
+                  <% end %>
+                <% end %>
+              <% end %>
+            </nav>
+          </div>
+
+          <!-- Usuario -->
+          <div class="sidebar-section">
+            <h3 class="sidebar-section-title">Cuenta</h3>
+            <div class="sidebar-user">
+              
+              <% if current_user %>
+                <% carrito = Carrito.find_by(id: session[:carrito_id]) %>
+                <% total = carrito&.carrito_items&.sum(:cantidad) || 0 %>
+                
+                <%= link_to carrito_path, class: "sidebar-link" do %>
+                  <%= image_tag "icons/cart-shopping-solid.svg", class: "sidebar-icon" %>
+                  <span>Carrito</span>
+                  <% if total > 0 %>
+                    <span class="sidebar-badge"><%= total %></span>
+                  <% end %>
+                <% end %>
+                
+                <%= link_to clientes_path, class: "sidebar-link" do %>
+                  <%= image_tag "icons/user-solid.svg", class: "sidebar-icon" %>
+                  <span>Mi Perfil</span>
+                <% end %>
+
+                <%= button_to destroy_user_session_path, method: :delete, class: "sidebar-logout", data: { turbo_confirm: "¿Estás seguro que quieres cerrar sesión?" } do %>
+                  <%= image_tag "icons/right-from-bracket-solid-full.svg", class: "sidebar-icon" %>
+                  <span><%= t("home.navbar.cerrar_sesion") %></span>
+                <% end %>
+              <% else %>
+                <% carrito = Carrito.find_by(id: session[:carrito_id]) %>
+                <% total = carrito&.carrito_items&.sum(:cantidad) || 0 %>
+                <%= link_to carrito_path, class: "sidebar-link" do %>
+                  <%= image_tag "icons/cart-shopping-solid.svg", class: "sidebar-icon" %>
+                  <span>Carrito</span>
+                  <% if total > 0 %>
+                    <span class="sidebar-badge"><%= total %></span>
+                  <% end %>
+                <% end %>
+                
+                <%= link_to new_user_session_path, class: "sidebar-link sidebar-login" do %>
+                  <%= image_tag "icons/user-solid.svg", class: "sidebar-icon" %>
+                  <span>Iniciar Sesión</span>
+                <% end %>
+              <% end %>
+            </div>
+          </div>
+
+          <!-- Idioma -->
+          <div class="sidebar-section">
+            <h3 class="sidebar-section-title">Idioma</h3>
+            <div class="sidebar-language">
+              <% if I18n.locale == :es %>
+                <%= link_to url_for(locale: 'en'), class: "sidebar-lang-btn" do %>
+                  <%= image_tag "icons/estados-unidos-de-america.svg", class: "sidebar-flag" %>
+                  <span>English</span>
+                <% end %>
+              <% else %>
+                <%= link_to url_for(locale: 'es'), class: "sidebar-lang-btn" do %>
+                  <%= image_tag "icons/españa.svg", class: "sidebar-flag" %>
+                  <span>Español</span>
+                <% end %>
+              <% end %>
+            </div>
+          </div>
+        </div>
+      </div>
 
       <main class="vistas">
         <%= yield %>
       </main>
 
       <footer class="footer">
+        <div class="footer-content">
+          <div class="footer-section footer-about">
+            <div class="footer-logo-container">
+              <%= image_tag "LogoLogo.svg", alt: "Bitevia", class: "footer-logo-img" %>
+              <h1>Bitevia Software</h1>
+            </div>
+            <p class="footer-description">
+              <%= t("home.footer.descripcion", default: "Tu comida favorita a un clic de distancia. Calidad, sabor y servicio excepcional.") %>
+            </p>
+            <div class="social-links">
+              <a href="#" target="_blank" aria-label="Instagram">  
+                <%= image_tag "icons/instagram-brands.svg", alt: "Instagram" %>
+              </a>
+              <a href="#" target="_blank" aria-label="WhatsApp">
+                <%= image_tag "icons/whatsapp-brands.svg", alt: "WhatsApp" %>
+              </a>
+              <a href="#" target="_blank" aria-label="TikTok">
+                <%= image_tag "icons/tiktok-brands.svg", alt: "TikTok" %>
+              </a>
+            </div>
+          </div>
 
-        <div class="social">
-          <a href="#">  
-            <%= image_tag "icons/instagram-brands.svg" %>
-          </a>
-          <a href="#">
-            <%= image_tag "icons/whatsapp-brands.svg" %>
-          </a>
-          <a href="#">
-            <%= image_tag "icons/tiktok-brands.svg" %>
-          </a>
+          <div class="footer-section">
+            <h3 class="footer-title"><%= t("home.footer.navegacion", default: "Navegación") %></h3>
+            <ul class="footer-links">
+              <li><%= link_to t("home.footer.inicio", default: "Inicio"), root_path %></li>
+              <li><%= link_to t("home.footer.menu", default: "Menú"), grupos_path %></li>
+              <li><%= link_to t("home.footer.combos", default: "Combos"), combos_path %></li>
+              <li><%= link_to t("home.footer.mis_ordenes", default: "Mis Órdenes"), orders_path %></li>
+            </ul>
+          </div>
+
+          <div class="footer-section">
+            <h3 class="footer-title"><%= t("home.footer.empresa", default: "Empresa") %></h3>
+            <ul class="footer-links">
+              <li><%= link_to t("home.footer.sobre_nosotros", default: "Sobre Nosotros"), "#" %></li>
+              <li><%= link_to t("home.footer.trabaja_con_nosotros", default: "Trabaja con Nosotros"), "#" %></li>
+              <li><%= link_to t("home.footer.contacto", default: "Contacto"), "#" %></li>
+              <li><%= link_to t("home.footer.blog", default: "Blog"), "#" %></li>
+            </ul>
+          </div>
+
+          <div class="footer-section">
+            <h3 class="footer-title"><%= t("home.footer.legal", default: "Legal") %></h3>
+            <ul class="footer-links">
+              <li><%= link_to t("home.footer.terminos_condiciones", default: "Términos y Condiciones"), "#" %></li>
+              <li><%= link_to t("home.footer.politica_privacidad", default: "Política de Privacidad"), "#" %></li>
+              <li><%= link_to t("home.footer.politica_cookies", default: "Política de Cookies"), "#" %></li>
+              <li><%= link_to t("home.footer.politica_devoluciones", default: "Política de Devoluciones"), "#" %></li>
+            </ul>
+          </div>
+
+          <div class="footer-section">
+            <h3 class="footer-title"><%= t("home.footer.contacto", default: "Contacto") %></h3>
+            <ul class="footer-contact">
+              <li>
+                <a href="mailto:biteviasoftware@gmail.com">biteviasoftware@gmail.com</a>
+              </li>
+              <li>
+                <a href="tel:+573024681298">+57 302 468 1298</a>
+              </li>
+              <li>
+                <span>Barranquilla, Atlántico, Colombia</span>
+              </li>
+            </ul>
+          </div>
         </div>
 
-        <div class="footer-name">
-          <span class="linea"></span>
-          <h2 class="nombre-footer">Bitevia</h2>
-          <span class="linea"></span>
-        </div>
+        <div class="footer-divider"></div>
 
-        <p>v4.3.3</p>
-        <p>© 2025 Bitevia Software. <%= t("home.footer.derechos_reservados")%></p>
+        <div class="footer-bottom">
+          <p class="footer-copyright">
+            © 2025 Bitevia Software. <%= t("home.footer.derechos_reservados", default: "Todos los derechos reservados") %>
+          </p>
+          <p class="footer-version">v4.3.3</p>
+        </div>
       </footer>
               <%= yield :modals %>
 
@@ -201,6 +371,44 @@
           container.appendChild(alert);
           showAlert(alert);
         };
+
+        // Mobile Sidebar Toggle
+        const menuToggle = document.getElementById('menuToggle');
+        const sidebar = document.getElementById('mobileSidebar');
+        const sidebarOverlay = document.getElementById('sidebarOverlay');
+        const sidebarClose = document.getElementById('sidebarClose');
+
+        const openSidebar = () => {
+          sidebar.classList.add('active');
+          sidebarOverlay.classList.add('active');
+          document.body.style.overflow = 'hidden';
+        };
+
+        const closeSidebar = () => {
+          sidebar.classList.remove('active');
+          sidebarOverlay.classList.remove('active');
+          document.body.style.overflow = '';
+        };
+
+        if (menuToggle) {
+          menuToggle.addEventListener('click', openSidebar);
+        }
+
+        if (sidebarClose) {
+          sidebarClose.addEventListener('click', closeSidebar);
+        }
+
+        if (sidebarOverlay) {
+          sidebarOverlay.addEventListener('click', closeSidebar);
+        }
+
+        // Cerrar sidebar al hacer clic en un link
+        const sidebarLinks = sidebar?.querySelectorAll('.sidebar-link, .sidebar-logout, .sidebar-lang-btn');
+        sidebarLinks?.forEach(link => {
+          link.addEventListener('click', () => {
+            setTimeout(closeSidebar, 200);
+          });
+        });
       });
       </script>
       <%= yield :modals %>

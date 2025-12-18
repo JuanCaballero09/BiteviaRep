@@ -15,6 +15,19 @@ Rails.application.routes.draw do
     resources :products, path: "productos", only: [:index] # rubocop:disable Layout/SpaceInsideArrayLiteralBrackets
 
     resources :clientes, only: [ :index, :update, :show ] # ruta vista perfil usuarios
+    
+    # Rastreador de pedidos (para usuarios y invitados)
+    resources :order_tracking, only: [:index] do
+      collection do
+        get :search
+      end
+    end
+    
+    resources :direccions, only: [ :index, :create, :destroy ] do
+      member do
+        patch :set_principal
+      end
+    end
 
     # Ruta especial para combos
     get "/combos", to: "products#combos", as: "combos"
@@ -48,6 +61,7 @@ Rails.application.routes.draw do
     resources :ingredientes
     resources :users
     resources :banners
+    resources :sedes
     resources :coupons do
       member do
         patch :toggle_activo

@@ -1,0 +1,2 @@
+module Dashboard::SedesHelper
+end

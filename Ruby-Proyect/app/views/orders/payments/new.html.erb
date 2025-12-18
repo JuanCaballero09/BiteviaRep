@@ -29,6 +29,20 @@
         </div>
 
         <div class="simple-order-footer">
+          <% subtotal = @order.total - (@order.costo_domicilio || 0) %>
+          
+          <div class="subtotal-line">
+            <span>Subtotal productos:</span>
+            <span class="precio-unitario" data-precio="<%= subtotal %>" data-locale="<%= I18n.locale %>"></span>
+          </div>
+          
+          <% if @order.costo_domicilio.present? && @order.costo_domicilio > 0 %>
+            <div class="delivery-line">
+              <span>🚚 Costo de domicilio:</span>
+              <span class="precio-unitario" data-precio="<%= @order.costo_domicilio %>" data-locale="<%= I18n.locale %>"></span>
+            </div>
+          <% end %>
+          
           <% if @order.coupon.present? %>
             <div class="coupon-line">
               <span>Cupón (<%= @order.coupon.codigo %>):</span>

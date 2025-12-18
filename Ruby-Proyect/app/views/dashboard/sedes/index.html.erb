@@ -1,0 +1,170 @@
+<section>
+  <h2>Sedes</h2>
+
+  <div style="display: flex; justify-content: space-between; align-items: center; flex-direction: row; margin-bottom: 20px;">
+    <%= link_to "Nueva Sede", new_dashboard_sede_path, class: "btn-aggr" %>
+    <%= form_with url: dashboard_sedes_path, method: :get, local: true, html: {class: "buscador"} do %>
+        <%= search_field_tag :query, params[:query], placeholder: "Buscar sede...", autocomplete: "off", id: "buscador-sedes" %>
+    <% end %>
+  </div>
+
+  <div id="sin-resultados-sedes" style="display: none; text-align: center; margin-top: 20px;">
+      <p>No se encontraron sedes</p>
+  </div>
+
+  <% if @sedes.any? %>
+    <section class="tabla-container">
+      <table class="tabla-datos">
+        <thead>
+          <tr>
+            <th>Nombre</th>
+            <th>Ubicación</th>
+            <th>Dirección</th>
+            <th>Teléfono</th>
+            <th>Estado</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody id="sedes-body">
+          <% @sedes.each do |sede| %>
+            <tr class="sede-row" 
+                data-nombre="<%= sede.nombre %>" 
+                data-ciudad="<%= sede.ciudad %>" 
+                data-direccion="<%= sede.direccion %>">
+              <td><%= sede.nombre %></td>
+              <td>
+                <%= sede.ciudad %>, <%= sede.departamento %>
+                <% if sede.barrio.present? %>
+                  <br><small style="color: #666;"><%= sede.barrio %></small>
+                <% end %>
+              </td>
+              <td><%= sede.direccion %></td>
+              <td><%= sede.telefono || 'N/A' %></td>
+              <td>
+                <% if sede.activo %>
+                  <span class="badge-activo">Activa</span>
+                <% else %>
+                  <span class="badge-inactivo">Inactiva</span>
+                <% end %>
+              </td>
+              <td class="acciones">
+                <%= link_to "👁️", dashboard_sede_path(sede), class: "btn-ver", title: "Ver" %>
+                <%= link_to "✏️", edit_dashboard_sede_path(sede), class: "btn-editar", title: "Editar" %>
+                <%= button_to "🗑️", dashboard_sede_path(sede), method: :delete, 
+                    data: { turbo_confirm: "¿Estás seguro de eliminar esta sede?" }, 
+                    class: "btn-eliminar", title: "Eliminar" %>
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </section>
+  <% else %>
+    <div style="text-align: center; margin-top: 20px; color: gray;">
+      No hay sedes registradas.
+    </div>
+  <% end %>
+</section>
+
+<style>
+.tabla-container {
+  overflow-x: auto;
+  margin: 20px 0;
+}
+
+.tabla-datos {
+  width: 100%;
+  border-collapse: collapse;
+  background: white;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.tabla-datos thead {
+  background: #ED5821;
+  color: white;
+}
+
+.tabla-datos th {
+  padding: 15px;
+  text-align: left;
+  font-weight: 600;
+}
+
+.tabla-datos td {
+  padding: 12px 15px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.tabla-datos tr:hover {
+  background-color: #f8f8f8;
+}
+
+.acciones {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.btn-ver, .btn-editar, .btn-eliminar {
+  background: none;
+  border: none;
+  font-size: 1.2rem;
+  cursor: pointer;
+  padding: 5px;
+  transition: transform 0.2s;
+}
+
+.btn-ver:hover, .btn-editar:hover, .btn-eliminar:hover {
+  transform: scale(1.2);
+}
+
+.badge-activo {
+  background: #10b981;
+  color: white;
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.badge-inactivo {
+  background: #ef4444;
+  color: white;
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+</style>
+
+<script>
+  document.addEventListener("turbo:load", function () {
+    const input = document.getElementById("buscador-sedes");
+    const sedeRows = document.querySelectorAll(".sede-row");
+    const mensaje = document.getElementById("sin-resultados-sedes");
+
+    if (!input) return;
+
+    const normalizar = (str) =>
+      str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+
+    input.addEventListener("input", function () {
+      const valor = normalizar(input.value.trim());
+      let visibles = 0;
+
+      sedeRows.forEach((row) => {
+        const nombre = normalizar(row.dataset.nombre);
+        const ciudad = normalizar(row.dataset.ciudad);
+        const direccion = normalizar(row.dataset.direccion);
+
+        const visible = nombre.includes(valor) || ciudad.includes(valor) || direccion.includes(valor);
+        row.style.display = visible ? "table-row" : "none";
+        if (visible) visibles++;
+      });
+
+      mensaje.style.display = visibles === 0 ? "block" : "none";
+    });
+  });
+</script>

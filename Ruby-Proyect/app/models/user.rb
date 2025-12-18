@@ -2,6 +2,7 @@ class User < ApplicationRecord
   has_many :orders, dependent: :destroy
   has_many :coupon_usages
   has_many :used_coupons, through: :coupon_usages, source: :coupon
+  has_many :direccions, dependent: :destroy
 
   # Devise modules
   devise :database_authenticatable, :registerable,

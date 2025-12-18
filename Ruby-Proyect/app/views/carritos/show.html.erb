@@ -3,7 +3,7 @@
     <!-- Header del carrito -->
     <div class="carrito-header">
       <div class="header-content">
-        <div class="header-icon">🛒</div>
+        <div class="header-icon"><%= image_tag("icons/cart-shopping-solid.svg", alt: "Carrito") %></div>
         <div class="header-info">
           <h1 class="carrito-titulo"><%= t("home.carrito.tu_carrito")%></h1>
           <% unless @items.empty? %>
@@ -25,26 +25,6 @@
         <%= link_to t("home.carrito.explorar_productos"), products_path, class: "btn-explorar" %>
       </div>
     <% else %>
-      <!-- Información del cliente para invitados - Aparece arriba -->
-      <% unless current_user %>
-        <div class="guest-info-top">
-          <div class="guest-info-section">
-            <h4><i class="user-icon">👤</i> Información del cliente</h4>
-            <div class="guest-fields">
-              <div class="field-row">
-                <input type="text" name="guest_nombre" placeholder="Nombre" class="guest-input" required minlength="3" form="checkout-form">
-                <input type="text" name="guest_apellido" placeholder="Apellido" class="guest-input" required minlength="3" form="checkout-form">
-              </div>
-              <div class="field-row">
-                <input type="email" name="guest_email" placeholder="Correo electrónico" class="guest-input" required form="checkout-form">
-                <input type="tel" name="guest_telefono" placeholder="Teléfono" class="guest-input" required minlength="8" maxlength="10" form="checkout-form">
-              </div>
-            </div>
-            <small class="guest-help">💡 Estos datos son necesarios para contactarte sobre tu pedido</small>
-          </div>
-        </div>
-      <% end %>
-
       <div class="carrito-content">
         <!-- Items del carrito -->
         <div class="carrito-items-section">
@@ -58,13 +38,37 @@
           
           <%= turbo_frame_tag "carrito", class: "carrito-items-list" do %>
             <%= render partial: "carritos/item",
-                       collection: @carrito.carrito_items,
-                       as: :item %>
+                      collection: @carrito.carrito_items,
+                      as: :item %>
           <% end %>
         </div>
 
         <!-- Sidebar con totales y acciones -->
         <div class="carrito-sidebar">
+          <!-- Información del cliente para invitados -->
+          <% unless current_user %>
+            <div class="guest-info-sidebar">
+              <div class="guest-info-card">
+                <h4><i class="user-icon">👤</i> Información del cliente</h4>
+                <div class="guest-fields">
+                  <div class="field-group">
+                    <input type="text" name="guest_nombre" placeholder="Nombre" class="guest-input guest-field" required minlength="3">
+                  </div>
+                  <div class="field-group">
+                    <input type="text" name="guest_apellido" placeholder="Apellido" class="guest-input guest-field" required minlength="3">
+                  </div>
+                  <div class="field-group">
+                    <input type="email" name="guest_email" placeholder="Correo electrónico" class="guest-input guest-field" required>
+                  </div>
+                  <div class="field-group">
+                    <input type="tel" name="guest_telefono" placeholder="Teléfono" class="guest-input guest-field" required minlength="8" maxlength="10">
+                  </div>
+                </div>
+                <small class="guest-help">💡 Estos datos son necesarios para contactarte sobre tu pedido</small>
+              </div>
+            </div>
+          <% end %>
+
           <!-- Cupón - Solo para usuarios autenticados -->
           <% if current_user %>
             <div class="cupon-section">
@@ -112,10 +116,29 @@
                   </div>
                 <% end %>
                 
+                <div class="total-item domicilio" id="domicilio-item" style="display: none;">
+                  <span class="total-label">
+                    🚚 Domicilio
+                    <small id="distancia-info" style="display: block; color: #666; font-size: 0.85rem; font-weight: normal;"></small>
+                  </span>
+                  <span class="total-value">
+                    <strong id="precio-domicilio" class="precio-total" 
+                            data-precio="0"
+                            data-locale="<%= I18n.locale %>"
+                            style="color: #333;">
+                      <% if I18n.locale == :en %>
+                        <%= number_to_currency(0, unit: "USD", format: "%n %u", precision: 2) %>
+                      <% else %>
+                        <%= number_to_currency(0, unit: "COP", separator: ",", delimiter: ".", format: "%n %u", precision: 0) %>
+                      <% end %>
+                    </strong>
+                  </span>
+                </div>
+                
                 <div class="total-item total-final">
                   <span class="total-label">Total:</span>
                   <span class= "total-value">
-                      <strong class="precio-total"
+                      <strong class="precio-total" id="precio-total-final"
                         data-precio="<%= @carrito.total %>"
                         data-locale="<%= I18n.locale %>">
                         <% if I18n.locale == :en %>
@@ -131,9 +154,81 @@
 
               <!-- Botón de compra -->
               <div class="checkout-section">
-                <!-- Campo de dirección -->
-                <div class="direccion-section">
+                <!-- Selector de sede -->
+                <div class="sede-section" style="margin-bottom: 20px;">
+                  <h4><i class="address-icon">🏪</i> Selecciona la sede</h4>
+                  <select id="sede-selector" class="direccion-selector" required>
+                    <% if @sedes.empty? %>
+                      <option value="" data-lat="" data-lng="">No hay sedes disponibles</option>
+                    <% else %>
+                      <% @sedes.each_with_index do |sede, index| %>
+                        <option value="<%= sede.id %>" 
+                                data-lat="<%= sede.latitud %>" 
+                                data-lng="<%= sede.longitud %>"
+                                <%= 'selected' if index == 0 %>>
+                          <%= sede.nombre %> - <%= sede.ciudad %>
+                        </option>
+                      <% end %>
+                    <% end %>
+                  </select>
+                </div>
+
+                <!-- Tipo de entrega -->
+                <div class="tipo-entrega-section" style="margin-bottom: 20px;">
+                  <h4><i class="address-icon">🚚</i> Tipo de entrega</h4>
+                  <div class="tipo-entrega-options">
+                    <label class="tipo-entrega-option">
+                      <input type="radio" name="tipo_entrega" value="domicilio" id="tipo-domicilio" checked>
+                      <span class="tipo-label">
+                        <i class="fa-solid fa-truck"></i>
+                        <strong>Domicilio</strong>
+                        <small>Te llevamos tu pedido</small>
+                      </span>
+                    </label>
+                    <label class="tipo-entrega-option">
+                      <input type="radio" name="tipo_entrega" value="recoger" id="tipo-recoger">
+                      <span class="tipo-label">
+                        <i class="fa-solid fa-store"></i>
+                        <strong>Pasar a Recoger</strong>
+                        <small>Recoge en la sede</small>
+                      </span>
+                    </label>
+                  </div>
+                </div>
+
+                <!-- Tiempo estimado -->
+                <div id="tiempo-estimado-section" style="margin-bottom: 20px; display: none;">
+                  <div class="tiempo-estimado-card">
+                    <i class="fa-solid fa-clock"></i>
+                    <div>
+                      <strong>Tiempo estimado:</strong>
+                      <span id="tiempo-estimado-text"></span>
+                    </div>
+                  </div>
+                </div>
+                
+                <!-- Campo de dirección (solo para domicilio) -->
+                <div class="direccion-section" id="direccion-section">
                   <h4><i class="address-icon">📍</i> <%= t("home.order.direccion_entrega", default: "Dirección de entrega") %></h4>
+                  
+                  <% if current_user && current_user.direccions.any? %>
+                    <!-- Selector de direcciones guardadas -->
+                    <div class="saved-addresses-selector">
+                      <select id="direccion-selector" class="direccion-selector">
+                        <option value="">Nueva dirección...</option>
+                        <% current_user.direccions.order(principal: :desc).each do |dir| %>
+                          <option value="<%= dir.id %>" 
+                                  data-direccion="<%= dir.direccion_formateada %>"
+                                  data-latitud="<%= dir.latitud %>"
+                                  data-longitud="<%= dir.longitud %>"
+                                  <%= 'selected' if dir.principal? %>>
+                            <%= dir.nombre %> <%= '⭐' if dir.principal? %>
+                          </option>
+                        <% end %>
+                      </select>
+                    </div>
+                  <% end %>
+                  
                   <%= form_with url: orders_path, method: :post, local: true, class: "checkout-form", id: "checkout-form" do |f| %>
                     <%= f.text_area :direccion, 
                                         placeholder: "Ej: Calle 123 #45-67, Apto 101, Barrio Centro, Barranquilla", 
@@ -141,9 +236,40 @@
                                         required: true,
                                         rows: 3,
                                         id: "direccion-input" %>
-                    <small class="direccion-help">Por favor incluye dirección completa, puntos de referencia y notas especiales</small>
+                    <small class="direccion-help">💡 Escribe para obtener sugerencias de Google Maps</small>
                     
-                    <%= f.submit t("home.show-vista.ir_a_pagar"), class: "btn-checkout", id: "btn-generar-orden" %>
+                    <!-- Campo oculto para enviar el costo de domicilio -->
+                    <%= f.hidden_field :costo_domicilio, id: 'costo-domicilio-hidden', value: '0' %>
+                    
+                    <% if current_user %>
+                      <div class="save-address-option">
+                        <label class="checkbox-label">
+                          <%= check_box_tag :guardar_direccion, '1', false, id: 'guardar-direccion-check' %>
+                          <span>Guardar esta dirección para pedidos futuros</span>
+                        </label>
+                        <div id="nombre-direccion-container" style="display: none; margin-top: 10px;">
+                          <%= text_field_tag :nombre_direccion, '', placeholder: "Ej: Casa, Oficina, Casa de mamá...", class: "form-control", id: 'nombre-direccion-input' %>
+                        </div>
+                      </div>
+                    <% end %>
+                    
+                    <button type="button" class="btn-checkout" id="btn-verificar-pedido">
+                      <i class="fa-solid fa-map-location-dot"></i>
+                      VERIFICAR PEDIDO
+                    </button>
+                  <% end %>
+                </div>
+
+                <!-- Botón para pasar a recoger (directo al pago) -->
+                <div id="btn-recoger-container" style="display: none;">
+                  <%= form_with url: orders_path, method: :post, local: true, id: "checkout-form-recoger" do |f| %>
+                    <%= f.hidden_field :direccion, value: "Pasar a recoger en sede", id: "direccion-recoger-hidden" %>
+                    <%= f.hidden_field :costo_domicilio, value: '0', id: 'costo-domicilio-recoger-hidden' %>
+                    
+                    <button type="submit" class="btn-checkout btn-recoger-directo">
+                      <i class="fa-solid fa-credit-card"></i>
+                      CONTINUAR AL PAGO
+                    </button>
                   <% end %>
                 </div>
                 
@@ -177,3 +303,1187 @@
     <% end %>
   </div>
 </section>
+
+<!-- Modal de Verificación con Mapa -->
+<div id="modal-verificacion" class="modal-verificacion" style="display: none;">
+  <div class="modal-verificacion-content">
+    <div class="modal-verificacion-header">
+      <h2><i class="fa-solid fa-map-location-dot"></i> Verificar Información del Pedido</h2>
+      <button class="modal-close" id="btn-cerrar-modal">
+        <i class="fa-solid fa-times"></i>
+      </button>
+    </div>
+    
+    <div class="modal-verificacion-body">
+      <!-- Mapa de Google -->
+      <div class="mapa-container">
+        <div id="map-verificacion" style="width: 100%; height: 300px; border-radius: 8px;"></div>
+      </div>
+      
+      <!-- Información del pedido -->
+      <div class="info-pedido-verificacion">
+        <h3><i class="fa-solid fa-info-circle"></i> Resumen del Pedido</h3>
+        
+        <div class="info-item-verif">
+          <span class="label">🚚 Tipo de entrega:</span>
+          <span class="value" id="modal-tipo-entrega">-</span>
+        </div>
+        
+        <div class="info-item-verif">
+          <span class="label">📍 Dirección:</span>
+          <span class="value" id="modal-direccion">-</span>
+        </div>
+        
+        <div class="info-item-verif" id="modal-distancia-item">
+          <span class="label">📏 Distancia desde la sede:</span>
+          <span class="value" id="modal-distancia">-</span>
+        </div>
+        
+        <div class="info-item-verif">
+          <span class="label">⏱️ Tiempo estimado:</span>
+          <span class="value" id="modal-tiempo">-</span>
+        </div>
+        
+        <div class="totales-verificacion">
+          <div class="total-line">
+            <span>Subtotal productos:</span>
+            <span id="modal-subtotal">$0 COP</span>
+          </div>
+          <div class="total-line" id="modal-domicilio-line">
+            <span>🚚 Costo de domicilio:</span>
+            <span id="modal-domicilio">$0 COP</span>
+          </div>
+          <div class="total-line total-final-line">
+            <span><strong>Total a pagar:</strong></span>
+            <span id="modal-total"><strong>$0 COP</strong></span>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="modal-verificacion-footer">
+      <button type="button" class="btn-secondary" id="btn-cancelar-modal">
+        <i class="fa-solid fa-arrow-left"></i>
+        Volver a editar
+      </button>
+      <button type="button" class="btn-primary" id="btn-confirmar-pedido">
+        <i class="fa-solid fa-credit-card"></i>
+        Continuar al pago
+      </button>
+    </div>
+  </div>
+</div>
+
+<style>
+/* Modal de Verificación */
+.modal-verificacion {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.7);
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  animation: fadeIn 0.3s ease;
+}
+
+.modal-verificacion-content {
+  background: white;
+  border-radius: 15px;
+  max-width: 800px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+  animation: slideUp 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from { transform: translateY(30px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+.modal-verificacion-header {
+  padding: 25px;
+  border-bottom: 2px solid #e0e0e0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: linear-gradient(135deg, #ED5821 0%, #ff7043 100%);
+  color: white;
+  border-radius: 15px 15px 0 0;
+}
+
+.modal-verificacion-header h2 {
+  margin: 0;
+  font-size: 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.modal-close {
+  background: rgba(255, 255, 255, 0.2);
+  border: none;
+  color: white;
+  font-size: 1.5rem;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal-close:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: rotate(90deg);
+}
+
+.modal-verificacion-body {
+  padding: 25px;
+}
+
+.mapa-container {
+  margin-bottom: 25px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.info-pedido-verificacion h3 {
+  margin: 0 0 20px 0;
+  color: #333;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 1.2rem;
+}
+
+.info-item-verif {
+  display: flex;
+  justify-content: space-between;
+  padding: 12px 0;
+  border-bottom: 1px solid #f0f0f0;
+  gap: 15px;
+}
+
+.info-item-verif .label {
+  color: #666;
+  font-weight: 500;
+}
+
+.info-item-verif .value {
+  color: #333;
+  font-weight: 600;
+  text-align: right;
+  flex: 1;
+}
+
+.totales-verificacion {
+  margin-top: 20px;
+  padding: 20px;
+  background: #f8f9fa;
+  border-radius: 8px;
+}
+
+.total-line {
+  display: flex;
+  justify-content: space-between;
+  padding: 10px 0;
+  font-size: 1rem;
+}
+
+.total-final-line {
+  border-top: 2px solid #ddd;
+  margin-top: 10px;
+  padding-top: 15px;
+  font-size: 1.2rem;
+  color: #ED5821;
+}
+
+.modal-verificacion-footer {
+  padding: 20px 25px;
+  border-top: 2px solid #e0e0e0;
+  display: flex;
+  gap: 15px;
+  justify-content: flex-end;
+  background: #f8f9fa;
+  border-radius: 0 0 15px 15px;
+}
+
+.btn-secondary, .btn-primary {
+  padding: 12px 25px;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-secondary {
+  background: #6c757d;
+  color: white;
+}
+
+.btn-secondary:hover {
+  background: #5a6268;
+  transform: translateY(-2px);
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #ED5821 0%, #ff7043 100%);
+  color: white;
+  box-shadow: 0 4px 15px rgba(237, 88, 33, 0.3);
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(237, 88, 33, 0.4);
+}
+
+@media (max-width: 768px) {
+  .modal-verificacion-content {
+    max-width: 95%;
+    margin: 10px;
+  }
+  
+  .modal-verificacion-header h2 {
+    font-size: 1.2rem;
+  }
+  
+  .modal-verificacion-footer {
+    flex-direction: column;
+  }
+  
+  .btn-secondary, .btn-primary {
+    width: 100%;
+    justify-content: center;
+  }
+  
+  #map-verificacion {
+    height: 250px !important;
+  }
+}
+
+.direccion-selector {
+  width: 100%;
+  padding: 12px;
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
+  font-size: 1rem;
+  margin-bottom: 15px;
+  background: white;
+  cursor: pointer;
+  transition: border-color 0.3s;
+}
+
+.direccion-selector:focus {
+  outline: none;
+  border-color: #ED5821;
+  box-shadow: 0 0 0 3px rgba(237, 88, 33, 0.1);
+}
+
+.save-address-option {
+  margin-top: 15px;
+  padding: 15px;
+  background: #f8f9fa;
+  border-radius: 8px;
+}
+
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  font-size: 0.95rem;
+  color: #333;
+}
+
+.checkbox-label input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+}
+
+#nombre-direccion-container input {
+  width: 100%;
+  padding: 10px;
+  border: 2px solid #e0e0e0;
+  border-radius: 6px;
+  font-size: 0.95rem;
+}
+</style>
+
+<script src="https://maps.googleapis.com/maps/api/js?key=<%= Rails.application.credentials.google_map[:key] %>&libraries=places&callback=initAutocomplete" async defer></script>
+
+<script>
+let autocomplete;
+let selectedPlace = null;
+
+// Hacer la función global para que Google Maps pueda llamarla
+window.initAutocomplete = function() {
+  const input = document.getElementById('direccion-input');
+  if (!input) return;
+
+  // Configurar autocompletado de Google Places
+  autocomplete = new google.maps.places.Autocomplete(input, {
+    componentRestrictions: { country: 'co' }, // Restringir a Colombia
+    fields: ['address_components', 'formatted_address', 'geometry', 'name'],
+    types: ['address']
+  });
+
+  // Cuando el usuario selecciona una dirección
+  autocomplete.addListener('place_changed', function() {
+    selectedPlace = autocomplete.getPlace();
+    
+    if (!selectedPlace.geometry) {
+      console.log("No se encontraron detalles para esta dirección");
+      return;
+    }
+
+    // Extraer componentes de la dirección
+    const components = selectedPlace.address_components;
+    let calle = '';
+    let numero = '';
+    let barrio = '';
+    let ciudad = '';
+    let departamento = '';
+    let codigoPostal = '';
+
+    components.forEach(component => {
+      const types = component.types;
+      
+      if (types.includes('street_number')) {
+        numero = component.long_name;
+      }
+      if (types.includes('route')) {
+        calle = component.long_name;
+      }
+      if (types.includes('sublocality_level_1') || types.includes('sublocality')) {
+        barrio = component.long_name;
+      }
+      if (types.includes('neighborhood') && !barrio) {
+        barrio = component.long_name;
+      }
+      if (types.includes('locality')) {
+        ciudad = component.long_name;
+      }
+      if (types.includes('administrative_area_level_1')) {
+        departamento = component.long_name;
+      }
+      if (types.includes('postal_code')) {
+        codigoPostal = component.long_name;
+      }
+    });
+
+    // Usar la dirección formateada completa de Google Maps (mantiene #, -, etc.)
+    const direccionCompleta = selectedPlace.formatted_address || selectedPlace.name;
+    
+    // Mostrar en el input
+    input.value = direccionCompleta;
+    
+    // Guardar dirección completa
+    input.dataset.direccionCompleta = direccionCompleta;
+    
+    // Guardar datos adicionales para crear la dirección
+    input.dataset.barrio = barrio || '';
+    input.dataset.ciudad = ciudad || '';
+    input.dataset.departamento = departamento || '';
+    input.dataset.codigoPostal = codigoPostal || '';
+    input.dataset.latitud = selectedPlace.geometry.location.lat();
+    input.dataset.longitud = selectedPlace.geometry.location.lng();
+
+    console.log('📍 Dirección seleccionada:', {
+      direccion: direccionCompleta,
+      barrio, ciudad, departamento, codigoPostal,
+      lat: selectedPlace.geometry.location.lat(),
+      lng: selectedPlace.geometry.location.lng()
+    });
+    
+    // Calcular costo de domicilio
+    calcularDomicilio(selectedPlace.geometry.location.lat(), selectedPlace.geometry.location.lng());
+  });
+};
+
+// Calcular costo de domicilio y tiempo estimado
+function calcularDomicilio(lat, lng) {
+  const PRECIO_BASE = 1500;
+  const PRECIO_POR_KM = 1000;
+  const INCREMENTO = 500;
+  const TIEMPO_PREPARACION = 20; // minutos
+  const VELOCIDAD_PROMEDIO = 25; // km/h en ciudad
+  
+  // Verificar si es domicilio o recoger
+  const tipoDomicilio = document.getElementById('tipo-domicilio');
+  const esDomicilio = tipoDomicilio && tipoDomicilio.checked;
+  
+  // Obtener coordenadas de la sede seleccionada
+  const sedeSelector = document.getElementById('sede-selector');
+  const sedeOption = sedeSelector.options[sedeSelector.selectedIndex];
+  const SEDE_LAT = parseFloat(sedeOption.dataset.lat);
+  const SEDE_LNG = parseFloat(sedeOption.dataset.lng);
+  
+  if (!SEDE_LAT || !SEDE_LNG) {
+    alert('Por favor selecciona una sede primero');
+    return;
+  }
+  
+  let precioFinal = 0;
+  let tiempoTotal = TIEMPO_PREPARACION;
+  let distancia = 0;
+  
+  if (esDomicilio && lat && lng) {
+    // Calcular distancia usando fórmula de Haversine
+    distancia = calcularDistanciaHaversine(SEDE_LAT, SEDE_LNG, lat, lng);
+    
+    // Calcular precio
+    const precioCalculado = PRECIO_BASE + (distancia * PRECIO_POR_KM);
+    
+    // Redondear hacia arriba en múltiplos de 500
+    precioFinal = Math.ceil(precioCalculado / INCREMENTO) * INCREMENTO;
+    
+    // Calcular tiempo de entrega (preparación + ruta)
+    const tiempoRuta = (distancia / VELOCIDAD_PROMEDIO) * 60; // convertir a minutos
+    tiempoTotal = TIEMPO_PREPARACION + tiempoRuta;
+  }
+  // Si es para recoger, precioFinal queda en 0 y tiempoTotal solo tiene preparación
+  
+  // Mostrar precio en la UI
+  const domicilioItem = document.getElementById('domicilio-item');
+  const precioDomicilio = document.getElementById('precio-domicilio');
+  const distanciaInfo = document.getElementById('distancia-info');
+  const totalFinal = document.getElementById('precio-total-final');
+  const costoDomicilioHidden = document.getElementById('costo-domicilio-hidden');
+  
+  if (domicilioItem && precioDomicilio && distanciaInfo && totalFinal) {
+    if (esDomicilio && precioFinal > 0) {
+      domicilioItem.style.display = 'flex';
+      precioDomicilio.dataset.precio = precioFinal;
+      distanciaInfo.textContent = `${distancia.toFixed(2)} km desde la sede`;
+    } else {
+      domicilioItem.style.display = 'none';
+      precioDomicilio.dataset.precio = 0;
+      distanciaInfo.textContent = '';
+    }
+    
+    // Actualizar campo oculto para enviar al backend
+    if (costoDomicilioHidden) {
+      costoDomicilioHidden.value = precioFinal;
+    }
+    
+    // Actualizar total final
+    const subtotal = parseFloat(totalFinal.dataset.precio.split('.')[0]) || parseFloat(totalFinal.dataset.precio) || 0;
+    const nuevoTotal = subtotal + precioFinal;
+    totalFinal.dataset.precio = nuevoTotal;
+    
+    // Disparar evento para que script.js formatee los precios
+    document.dispatchEvent(new Event('formatear-precios'));
+    
+    console.log('🚚 Cálculo:', {
+      tipo: esDomicilio ? 'Domicilio' : 'Recoger',
+      distancia: esDomicilio ? `${distancia.toFixed(2)} km` : 'N/A',
+      precioFinal: precioFinal,
+      subtotal: subtotal,
+      nuevoTotal: nuevoTotal
+    });
+  }
+  
+  // Mostrar tiempo estimado
+  mostrarTiempoEstimado(tiempoTotal, esDomicilio, distancia);
+}
+
+// Función para mostrar el tiempo estimado
+function mostrarTiempoEstimado(minutos, esDomicilio, distancia) {
+  const tiempoSection = document.getElementById('tiempo-estimado-section');
+  const tiempoText = document.getElementById('tiempo-estimado-text');
+  
+  if (!tiempoSection || !tiempoText) return;
+  
+  // Solo mostrar para "Pasar a Recoger", ocultarlo para "Domicilio"
+  if (esDomicilio) {
+    tiempoSection.style.display = 'none';
+    return;
+  }
+  
+  // Mostrar solo para recoger
+  tiempoSection.style.display = 'block';
+  
+  const horas = Math.floor(minutos / 60);
+  const mins = Math.round(minutos % 60);
+  
+  let textoTiempo = '';
+  if (horas > 0) {
+    textoTiempo = `${horas} hora${horas > 1 ? 's' : ''} ${mins} minutos`;
+  } else {
+    textoTiempo = `${mins} minutos`;
+  }
+  
+  // Para recoger, siempre es solo preparación
+  tiempoText.innerHTML = `<strong>${textoTiempo}</strong> (tiempo de preparación)`;
+}
+
+
+// Fórmula de Haversine para calcular distancia entre coordenadas
+function calcularDistanciaHaversine(lat1, lon1, lat2, lon2) {
+  const R = 6371; // Radio de la Tierra en km
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLon = (lon2 - lon1) * Math.PI / 180;
+  
+  const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+            Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+            Math.sin(dLon/2) * Math.sin(dLon/2);
+  
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+  const distancia = R * c;
+  
+  return distancia;
+}
+
+// Selector de direcciones guardadas
+document.addEventListener('turbo:load', function() {
+  const sedeSelector = document.getElementById('sede-selector');
+  const selector = document.getElementById('direccion-selector');
+  const input = document.getElementById('direccion-input');
+  const guardarCheck = document.getElementById('guardar-direccion-check');
+  const nombreContainer = document.getElementById('nombre-direccion-container');
+  const tipoDomicilio = document.getElementById('tipo-domicilio');
+  const tipoRecoger = document.getElementById('tipo-recoger');
+  const direccionSection = document.getElementById('direccion-section');
+  const btnRecogerContainer = document.getElementById('btn-recoger-container');
+  const tiempoEstimadoSection = document.getElementById('tiempo-estimado-section');
+  
+  // Manejar cambio de tipo de entrega
+  if (tipoDomicilio && tipoRecoger && direccionSection) {
+    function toggleTipoEntrega() {
+      const esDomicilio = tipoDomicilio.checked;
+      
+      if (esDomicilio) {
+        // Mostrar sección de dirección y botón verificar
+        direccionSection.style.display = 'block';
+        if (btnRecogerContainer) btnRecogerContainer.style.display = 'none';
+        
+        // SIEMPRE ocultar tiempo estimado en domicilio (se verá en el modal)
+        if (tiempoEstimadoSection) tiempoEstimadoSection.style.display = 'none';
+        
+        // Si hay dirección, recalcular domicilio
+        const lat = parseFloat(input.dataset.latitud);
+        const lng = parseFloat(input.dataset.longitud);
+        if (lat && lng) {
+          calcularDomicilio(lat, lng);
+        } else {
+          // Resetear costo de domicilio
+          const domicilioItem = document.getElementById('domicilio-item');
+          if (domicilioItem) domicilioItem.style.display = 'none';
+          const costoDomicilioHidden = document.getElementById('costo-domicilio-hidden');
+          if (costoDomicilioHidden) costoDomicilioHidden.value = '0';
+          // Actualizar total
+          actualizarTotalSinDomicilio();
+        }
+      } else {
+        // Ocultar sección de dirección y mostrar botón directo
+        direccionSection.style.display = 'none';
+        if (btnRecogerContainer) btnRecogerContainer.style.display = 'block';
+        
+        // Resetear costo de domicilio a 0 y mostrar solo tiempo de preparación
+        calcularDomicilio(null, null);
+      }
+    }
+    
+    tipoDomicilio.addEventListener('change', toggleTipoEntrega);
+    tipoRecoger.addEventListener('change', toggleTipoEntrega);
+    
+    // Inicializar estado
+    toggleTipoEntrega();
+  }
+  
+  // Función auxiliar para actualizar total sin domicilio
+  function actualizarTotalSinDomicilio() {
+    const totalFinal = document.getElementById('precio-total-final');
+    if (totalFinal) {
+      const subtotalOriginal = parseFloat(totalFinal.dataset.precio.split('.')[0]) || parseFloat(totalFinal.dataset.precio) || 0;
+      totalFinal.dataset.precio = subtotalOriginal;
+      document.dispatchEvent(new Event('formatear-precios'));
+    }
+  }
+  
+  // Validación del formulario de recoger (para invitados)
+  const formRecoger = document.getElementById('checkout-form-recoger');
+  if (formRecoger) {
+    formRecoger.addEventListener('submit', function(e) {
+      // Validar campos de invitado si existen
+      const guestFields = document.querySelectorAll('.guest-field');
+      if (guestFields.length > 0) {
+        let isValid = true;
+        let firstInvalidField = null;
+        
+        guestFields.forEach(field => {
+          if (!field.value.trim()) {
+            isValid = false;
+            field.style.borderColor = 'red';
+            if (!firstInvalidField) firstInvalidField = field;
+          } else if (field.name === 'guest_nombre' && field.value.trim().length < 3) {
+            isValid = false;
+            field.style.borderColor = 'red';
+            if (!firstInvalidField) firstInvalidField = field;
+          } else if (field.name === 'guest_apellido' && field.value.trim().length < 3) {
+            isValid = false;
+            field.style.borderColor = 'red';
+            if (!firstInvalidField) firstInvalidField = field;
+          } else if (field.name === 'guest_email' && !field.value.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)) {
+            isValid = false;
+            field.style.borderColor = 'red';
+            if (!firstInvalidField) firstInvalidField = field;
+          } else if (field.name === 'guest_telefono' && field.value.trim().length < 8) {
+            isValid = false;
+            field.style.borderColor = 'red';
+            if (!firstInvalidField) firstInvalidField = field;
+          } else {
+            field.style.borderColor = '';
+          }
+        });
+        
+        if (!isValid) {
+          e.preventDefault();
+          alert('Por favor completa todos los campos de información del cliente correctamente');
+          if (firstInvalidField) firstInvalidField.focus();
+          return false;
+        }
+        
+        // Agregar campos al formulario
+        guestFields.forEach(field => {
+          const hiddenField = document.createElement('input');
+          hiddenField.type = 'hidden';
+          hiddenField.name = field.name;
+          hiddenField.value = field.value;
+          formRecoger.appendChild(hiddenField);
+        });
+      }
+      
+      // Actualizar dirección según sede seleccionada
+      const sedeSelector = document.getElementById('sede-selector');
+      const sedeNombre = sedeSelector.options[sedeSelector.selectedIndex].text;
+      document.getElementById('direccion-recoger-hidden').value = `Recoger en: ${sedeNombre}`;
+    });
+  }
+  
+  // Recalcular domicilio cuando cambie la sede
+  if (sedeSelector && input) {
+    sedeSelector.addEventListener('change', function() {
+      const lat = parseFloat(input.dataset.latitud);
+      const lng = parseFloat(input.dataset.longitud);
+      if (lat && lng) {
+        calcularDomicilio(lat, lng);
+      } else if (tipoRecoger && tipoRecoger.checked) {
+        // Si es para recoger, solo mostrar tiempo
+        calcularDomicilio(null, null);
+      }
+    });
+  }
+  
+  // Cargar dirección guardada al seleccionar
+  if (selector) {
+    selector.addEventListener('change', function() {
+      const selectedOption = this.options[this.selectedIndex];
+      const saveAddressOption = document.querySelector('.save-address-option');
+      
+      if (this.value) {
+        input.value = selectedOption.dataset.direccion;
+        
+        // Calcular domicilio si tiene coordenadas
+        const lat = parseFloat(selectedOption.dataset.latitud);
+        const lng = parseFloat(selectedOption.dataset.longitud);
+        if (lat && lng) {
+          calcularDomicilio(lat, lng);
+          // Guardar coordenadas en el input
+          input.dataset.latitud = lat;
+          input.dataset.longitud = lng;
+        }
+        
+        // Ocultar opción de guardar si es una dirección ya guardada
+        if (saveAddressOption) {
+          saveAddressOption.style.display = 'none';
+        }
+        
+        // Desmarcar checkbox si estaba marcado
+        if (guardarCheck) {
+          guardarCheck.checked = false;
+        }
+        if (nombreContainer) {
+          nombreContainer.style.display = 'none';
+        }
+      } else {
+        input.value = '';
+        // Limpiar coordenadas
+        input.dataset.latitud = '';
+        input.dataset.longitud = '';
+        
+        // Ocultar costo de domicilio
+        const domicilioItem = document.getElementById('domicilio-item');
+        if (domicilioItem) domicilioItem.style.display = 'none';
+        
+        // Mostrar opción de guardar para nueva dirección
+        if (saveAddressOption) {
+          saveAddressOption.style.display = 'block';
+        }
+      }
+    });
+    
+    // Cargar dirección principal por defecto y calcular domicilio
+    const principalOption = selector.querySelector('option[selected]');
+    if (principalOption && principalOption.value) {
+      input.value = principalOption.dataset.direccion;
+      const lat = parseFloat(principalOption.dataset.latitud);
+      const lng = parseFloat(principalOption.dataset.longitud);
+      if (lat && lng) {
+        calcularDomicilio(lat, lng);
+        input.dataset.latitud = lat;
+        input.dataset.longitud = lng;
+      }
+    }
+  }
+  
+  // Mostrar/ocultar campo de nombre de dirección
+  if (guardarCheck && nombreContainer) {
+    guardarCheck.addEventListener('change', function() {
+      nombreContainer.style.display = this.checked ? 'block' : 'none';
+      if (this.checked) {
+        document.getElementById('nombre-direccion-input').required = true;
+      } else {
+        document.getElementById('nombre-direccion-input').required = false;
+      }
+    });
+  }
+  
+  // Manejo del botón Verificar Pedido
+  const btnVerificar = document.getElementById('btn-verificar-pedido');
+  const modal = document.getElementById('modal-verificacion');
+  const btnCerrar = document.getElementById('btn-cerrar-modal');
+  const btnCancelar = document.getElementById('btn-cancelar-modal');
+  const btnConfirmar = document.getElementById('btn-confirmar-pedido');
+  const checkoutForm = document.getElementById('checkout-form');
+  let map, marker;
+  
+  if (btnVerificar) {
+    btnVerificar.addEventListener('click', function(e) {
+      e.preventDefault();
+      
+      const esDomicilio = tipoDomicilio && tipoDomicilio.checked;
+      
+      // PRIMERO: Validar campos de invitado si existen
+      const guestFields = document.querySelectorAll('.guest-field');
+      if (guestFields.length > 0) {
+        let isValid = true;
+        let firstInvalidField = null;
+        let errorMsg = '';
+        
+        guestFields.forEach(field => {
+          field.style.borderColor = ''; // Resetear
+          
+          if (!field.value.trim()) {
+            isValid = false;
+            field.style.borderColor = 'red';
+            if (!firstInvalidField) {
+              firstInvalidField = field;
+              errorMsg = `Por favor completa el campo ${field.placeholder}`;
+            }
+          } else if (field.name === 'guest_nombre' && field.value.trim().length < 3) {
+            isValid = false;
+            field.style.borderColor = 'red';
+            if (!firstInvalidField) {
+              firstInvalidField = field;
+              errorMsg = 'El nombre debe tener al menos 3 caracteres';
+            }
+          } else if (field.name === 'guest_apellido' && field.value.trim().length < 3) {
+            isValid = false;
+            field.style.borderColor = 'red';
+            if (!firstInvalidField) {
+              firstInvalidField = field;
+              errorMsg = 'El apellido debe tener al menos 3 caracteres';
+            }
+          } else if (field.name === 'guest_email' && !field.value.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)) {
+            isValid = false;
+            field.style.borderColor = 'red';
+            if (!firstInvalidField) {
+              firstInvalidField = field;
+              errorMsg = 'Por favor ingresa un correo electrónico válido';
+            }
+          } else if (field.name === 'guest_telefono' && field.value.trim().length < 8) {
+            isValid = false;
+            field.style.borderColor = 'red';
+            if (!firstInvalidField) {
+              firstInvalidField = field;
+              errorMsg = 'El teléfono debe tener al menos 8 dígitos';
+            }
+          }
+        });
+        
+        if (!isValid) {
+          alert(errorMsg);
+          if (firstInvalidField) firstInvalidField.focus();
+          return;
+        }
+      }
+      
+      // SEGUNDO: Validar dirección solo si es domicilio
+      if (esDomicilio) {
+        const direccion = input.value.trim();
+        if (!direccion) {
+          alert('Por favor ingresa una dirección de entrega');
+          input.focus();
+          return;
+        }
+        
+        const lat = parseFloat(input.dataset.latitud);
+        const lng = parseFloat(input.dataset.longitud);
+        
+        if (!lat || !lng) {
+          alert('Por favor selecciona una dirección del autocompletado de Google Maps');
+          return;
+        }
+      }
+      
+      // Obtener valores para mostrar en el modal
+      const costoDomicilio = esDomicilio ? (parseFloat(document.getElementById('costo-domicilio-hidden').value) || 0) : 0;
+      const subtotal = parseFloat(document.getElementById('precio-total-final').dataset.precio) || 0;
+      const distanciaTexto = esDomicilio ? document.getElementById('distancia-info').textContent : '';
+      const totalFinal = subtotal + costoDomicilio;
+      const tiempoEstimado = document.getElementById('tiempo-estimado-text') ? document.getElementById('tiempo-estimado-text').innerHTML : '';
+      const tipoEntregaTexto = esDomicilio ? '🚚 Domicilio' : '🏪 Pasar a Recoger';
+      const sedeNombre = sedeSelector.options[sedeSelector.selectedIndex].text;
+      
+      // Actualizar información del modal
+      document.getElementById('modal-tipo-entrega').innerHTML = `<strong>${tipoEntregaTexto}</strong> - ${sedeNombre}`;
+      document.getElementById('modal-direccion').textContent = esDomicilio ? (input.value || direccion) : sedeNombre;
+      
+      // Mostrar u ocultar distancia según tipo
+      const distanciaItem = document.getElementById('modal-distancia-item');
+      if (distanciaItem) {
+        distanciaItem.style.display = esDomicilio ? 'flex' : 'none';
+      }
+      document.getElementById('modal-distancia').textContent = distanciaTexto;
+      
+      document.getElementById('modal-tiempo').innerHTML = tiempoEstimado;
+      document.getElementById('modal-subtotal').textContent = formatCurrency(subtotal);
+      
+      // Mostrar u ocultar línea de domicilio
+      const domicilioLine = document.getElementById('modal-domicilio-line');
+      if (domicilioLine) {
+        domicilioLine.style.display = esDomicilio && costoDomicilio > 0 ? 'flex' : 'none';
+      }
+      document.getElementById('modal-domicilio').textContent = formatCurrency(costoDomicilio);
+      document.getElementById('modal-total').textContent = formatCurrency(totalFinal);
+      
+      // Mostrar modal
+      modal.style.display = 'flex';
+      
+      // Inicializar mapa solo si es domicilio
+      if (esDomicilio) {
+        const lat = parseFloat(input.dataset.latitud);
+        const lng = parseFloat(input.dataset.longitud);
+        setTimeout(() => {
+          initMapVerificacion(lat, lng);
+        }, 100);
+      } else {
+        // Si es para recoger, mostrar solo la sede en el mapa
+        setTimeout(() => {
+          initMapSedeRecoger();
+        }, 100);
+      }
+    });
+  }
+  
+  // Función para formatear moneda
+  function formatCurrency(value) {
+    return new Intl.NumberFormat('es-CO', {
+      style: 'currency',
+      currency: 'COP',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0
+    }).format(value);
+  }
+  
+  // Función para inicializar el mapa en el modal
+  function initMapVerificacion(lat, lng) {
+    const mapElement = document.getElementById('map-verificacion');
+    if (!mapElement) return;
+    
+    // Obtener coordenadas de la sede seleccionada
+    const sedeSelector = document.getElementById('sede-selector');
+    const sedeOption = sedeSelector.options[sedeSelector.selectedIndex];
+    const SEDE_LAT = parseFloat(sedeOption.dataset.lat);
+    const SEDE_LNG = parseFloat(sedeOption.dataset.lng);
+    const sedeNombre = sedeOption.text;
+    
+    map = new google.maps.Map(mapElement, {
+      center: { lat: lat, lng: lng },
+      zoom: 13,
+      styles: [
+        {
+          featureType: 'poi',
+          elementType: 'labels',
+          stylers: [{ visibility: 'off' }]
+        }
+      ]
+    });
+    
+    // Marcador de la sede (origen) - Verde
+    const sedeMarker = new google.maps.Marker({
+      position: { lat: SEDE_LAT, lng: SEDE_LNG },
+      map: map,
+      title: sedeNombre,
+      label: {
+        text: '🏪',
+        fontSize: '24px'
+      },
+      icon: {
+        url: 'http://maps.google.com/mapfiles/ms/icons/green-dot.png'
+      }
+    });
+    
+    // Marcador del destino (tu dirección) - Rojo
+    marker = new google.maps.Marker({
+      position: { lat: lat, lng: lng },
+      map: map,
+      title: 'Tu dirección de entrega',
+      label: {
+        text: '📍',
+        fontSize: '24px'
+      },
+      icon: {
+        url: 'http://maps.google.com/mapfiles/ms/icons/red-dot.png'
+      }
+    });
+    
+    // Usar Directions Service para mostrar la ruta real
+    const directionsService = new google.maps.DirectionsService();
+    const directionsRenderer = new google.maps.DirectionsRenderer({
+      map: map,
+      suppressMarkers: true, // No mostrar los marcadores por defecto de Directions
+      polylineOptions: {
+        strokeColor: '#ED5821',
+        strokeOpacity: 0.8,
+        strokeWeight: 4
+      }
+    });
+    
+    const request = {
+      origin: { lat: SEDE_LAT, lng: SEDE_LNG },
+      destination: { lat: lat, lng: lng },
+      travelMode: google.maps.TravelMode.DRIVING
+    };
+    
+    directionsService.route(request, function(result, status) {
+      if (status === 'OK') {
+        directionsRenderer.setDirections(result);
+      } else {
+        console.error('Error al obtener la ruta:', status);
+        // Fallback: dibujar línea recta si falla
+        const lineaRuta = new google.maps.Polyline({
+          path: [
+            { lat: SEDE_LAT, lng: SEDE_LNG },
+            { lat: lat, lng: lng }
+          ],
+          geodesic: true,
+          strokeColor: '#ED5821',
+          strokeOpacity: 0.8,
+          strokeWeight: 3,
+          map: map
+        });
+      }
+    });
+  }
+  
+  // Función para mostrar solo la sede en el mapa (cuando es para recoger)
+  function initMapSedeRecoger() {
+    const mapElement = document.getElementById('map-verificacion');
+    if (!mapElement) return;
+    
+    // Obtener coordenadas de la sede seleccionada
+    const sedeSelector = document.getElementById('sede-selector');
+    const sedeOption = sedeSelector.options[sedeSelector.selectedIndex];
+    const SEDE_LAT = parseFloat(sedeOption.dataset.lat);
+    const SEDE_LNG = parseFloat(sedeOption.dataset.lng);
+    const sedeNombre = sedeOption.text;
+    
+    map = new google.maps.Map(mapElement, {
+      center: { lat: SEDE_LAT, lng: SEDE_LNG },
+      zoom: 16,
+      styles: [
+        {
+          featureType: 'poi',
+          elementType: 'labels',
+          stylers: [{ visibility: 'on' }]
+        }
+      ]
+    });
+    
+    // Marcador de la sede
+    marker = new google.maps.Marker({
+      position: { lat: SEDE_LAT, lng: SEDE_LNG },
+      map: map,
+      title: sedeNombre,
+      label: {
+        text: '🏪',
+        fontSize: '32px'
+      },
+      animation: google.maps.Animation.BOUNCE
+    });
+    
+    // Info window
+    const infoWindow = new google.maps.InfoWindow({
+      content: `<div style="padding: 10px;"><strong>${sedeNombre}</strong><br><small>Punto de recogida</small></div>`
+    });
+    
+    infoWindow.open(map, marker);
+  }
+  
+  // Cerrar modal
+  function cerrarModal() {
+    modal.style.display = 'none';
+  }
+  
+  if (btnCerrar) btnCerrar.addEventListener('click', cerrarModal);
+  if (btnCancelar) btnCancelar.addEventListener('click', cerrarModal);
+  
+  // Confirmar pedido y enviar formulario
+  if (btnConfirmar && checkoutForm) {
+    btnConfirmar.addEventListener('click', async function() {
+      // Validar campos de invitado si no está logueado
+      const isGuest = !document.querySelector('.guest-info-sidebar') ? false : true;
+      
+      if (isGuest) {
+        const guestNombre = document.querySelector('input[name="guest_nombre"]');
+        const guestApellido = document.querySelector('input[name="guest_apellido"]');
+        const guestEmail = document.querySelector('input[name="guest_email"]');
+        const guestTelefono = document.querySelector('input[name="guest_telefono"]');
+        
+        if (!guestNombre || !guestNombre.value.trim() || guestNombre.value.length < 3) {
+          alert('Por favor ingresa tu nombre (mínimo 3 caracteres)');
+          modal.style.display = 'none';
+          guestNombre.focus();
+          return;
+        }
+        
+        if (!guestApellido || !guestApellido.value.trim() || guestApellido.value.length < 3) {
+          alert('Por favor ingresa tu apellido (mínimo 3 caracteres)');
+          modal.style.display = 'none';
+          guestApellido.focus();
+          return;
+        }
+        
+        if (!guestEmail || !guestEmail.value.trim() || !guestEmail.validity.valid) {
+          alert('Por favor ingresa un correo electrónico válido');
+          modal.style.display = 'none';
+          guestEmail.focus();
+          return;
+        }
+        
+        if (!guestTelefono || !guestTelefono.value.trim() || guestTelefono.value.length < 8) {
+          alert('Por favor ingresa un teléfono válido (mínimo 8 dígitos)');
+          modal.style.display = 'none';
+          guestTelefono.focus();
+          return;
+        }
+      }
+      
+      // Agregar campos de invitado al formulario si existen
+      if (isGuest) {
+        const guestNombre = document.querySelector('input[name="guest_nombre"]');
+        const guestApellido = document.querySelector('input[name="guest_apellido"]');
+        const guestEmail = document.querySelector('input[name="guest_email"]');
+        const guestTelefono = document.querySelector('input[name="guest_telefono"]');
+        
+        // Agregar campos al formulario
+        if (guestNombre) {
+          const hiddenNombre = document.createElement('input');
+          hiddenNombre.type = 'hidden';
+          hiddenNombre.name = 'guest_nombre';
+          hiddenNombre.value = guestNombre.value;
+          checkoutForm.appendChild(hiddenNombre);
+        }
+        
+        if (guestApellido) {
+          const hiddenApellido = document.createElement('input');
+          hiddenApellido.type = 'hidden';
+          hiddenApellido.name = 'guest_apellido';
+          hiddenApellido.value = guestApellido.value;
+          checkoutForm.appendChild(hiddenApellido);
+        }
+        
+        if (guestEmail) {
+          const hiddenEmail = document.createElement('input');
+          hiddenEmail.type = 'hidden';
+          hiddenEmail.name = 'guest_email';
+          hiddenEmail.value = guestEmail.value;
+          checkoutForm.appendChild(hiddenEmail);
+        }
+        
+        if (guestTelefono) {
+          const hiddenTelefono = document.createElement('input');
+          hiddenTelefono.type = 'hidden';
+          hiddenTelefono.name = 'guest_telefono';
+          hiddenTelefono.value = guestTelefono.value;
+          checkoutForm.appendChild(hiddenTelefono);
+        }
+      }
+      
+      // Guardar dirección si está marcado
+      if (guardarCheck && guardarCheck.checked && input.dataset.latitud) {
+        const nombreInput = document.getElementById('nombre-direccion-input');
+        const direccionData = {
+          direccion: {
+            nombre: nombreInput.value || 'Mi dirección',
+            direccion_completa: input.dataset.direccionCompleta || input.value,
+            barrio: input.dataset.barrio || '',
+            ciudad: input.dataset.ciudad || '',
+            departamento: input.dataset.departamento || '',
+            codigo_postal: input.dataset.codigoPostal || '',
+            latitud: input.dataset.latitud,
+            longitud: input.dataset.longitud,
+            principal: false
+          }
+        };
+        
+        try {
+          await fetch('<%= direccions_path %>', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').content
+            },
+            body: JSON.stringify(direccionData)
+          });
+        } catch (error) {
+          console.error('❌ Error al guardar dirección:', error);
+        }
+      }
+      
+      // Enviar formulario
+      checkoutForm.submit();
+    });
+  }
+  
+  // Cerrar modal al hacer clic fuera
+  modal.addEventListener('click', function(e) {
+    if (e.target === modal) {
+      cerrarModal();
+    }
+  });
+});
+</script>
