@@ -17,7 +17,12 @@
 
   <div class="item-info">
     <div class="item-header">
-      <h4 class="item-nombre"><%= item.product.nombre %></h4>
+      <h4 class="item-nombre">
+        <%= item.product.nombre %>
+        <% if item.product.is_a?(Pizza) && item.tamano_selected.present? %>
+          <span class="pizza-size-badge">🍕 <%= item.tamano_selected %></span>
+        <% end %>
+      </h4>
       <div class="item-precio-unitario">
         <strong class="precio-unitario" 
           data-precio="<%= item.precio %>" 

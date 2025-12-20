@@ -39,11 +39,19 @@
                   </div>
                 <% end %>
                 <div class="carta-acciones">
-                  <%= button_to t("home.carrito.agregar_carrito"), 
-                               carrito_items_path(product_id: producto.id), 
-                               method: :post, 
-                               class: "carta-btn",
-                               data: { turbo_frame: "_top" } %>
+                  <% if producto.is_a?(Pizza) %>
+                    <%= button_to t("home.carrito.agregar_carrito"), 
+                                 carrito_items_path(product_id: producto.id), 
+                                 method: :post, 
+                                 class: "carta-btn",
+                                 data: { turbo_stream: true } %>
+                  <% else %>
+                    <%= button_to t("home.carrito.agregar_carrito"), 
+                                 carrito_items_path(product_id: producto.id), 
+                                 method: :post, 
+                                 class: "carta-btn",
+                                 data: { turbo_frame: "_top" } %>
+                  <% end %>
                 </div>
               </div>
             <% end %>

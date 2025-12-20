@@ -37,11 +37,19 @@
       <%# </div> %>
 
       <div class="producto-acciones">
-        <%= button_to t("home.carrito.agregar_carrito"), 
-                     carrito_items_path(product_id: @product.id), 
-                     method: :post, 
-                     class: "btn-agregar-modern",
-                     data: { turbo_frame: "_top" } %>
+        <% if @product.is_a?(Pizza) %>
+          <%= button_to t("home.carrito.agregar_carrito"), 
+                       carrito_items_path(product_id: @product.id), 
+                       method: :post, 
+                       class: "btn-agregar-modern",
+                       data: { turbo_stream: true } %>
+        <% else %>
+          <%= button_to t("home.carrito.agregar_carrito"), 
+                       carrito_items_path(product_id: @product.id), 
+                       method: :post, 
+                       class: "btn-agregar-modern",
+                       data: { turbo_frame: "_top" } %>
+        <% end %>
       </div>
     </aside>
 
@@ -90,6 +98,23 @@
             </ul>
           </div>
         <% else %>
+          <% if @product.is_a?(Pizza) && @product.tamanos_disponibles.any? %>
+            <div class="detalle-card">
+              <h3 class="card-titulo">
+                <span class="icono">🍕</span>
+                Tamaños disponibles
+              </h3>
+              <ul class="ingredientes-lista">
+                <% @product.tamanos_disponibles.each do |tamano| %>
+                  <li class="ingrediente-item">
+                    <span class="ingrediente-bullet">•</span>
+                    <%= tamano %>
+                  </li>
+                <% end %>
+              </ul>
+            </div>
+          <% end %>
+          
           <% if @product.ingredientes.any? %>
             <div class="detalle-card">
               <h3 class="card-titulo">

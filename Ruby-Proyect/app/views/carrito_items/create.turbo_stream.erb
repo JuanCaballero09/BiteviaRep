@@ -16,6 +16,12 @@
 <turbo-stream action="update" target="contador-carrito-update">
   <template>
     <script>
+      // Cerrar modal de pizza si existe
+      const modal = document.getElementById('pizza-size-modal');
+      if (modal) {
+        modal.remove();
+      }
+      
       document.querySelectorAll('.contador-carrito').forEach(el => {
         el.textContent = '<%= @item.carrito.carrito_items.sum(:cantidad) %>';
       });

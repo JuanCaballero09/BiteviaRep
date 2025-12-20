@@ -26,7 +26,14 @@ class Dashboard::ProductsController < ApplicationController
   end
 
   def new
-    @product = params[:type] == "Combo" ? Combo.new : Product.new
+    @product = case params[:type]
+               when "Combo"
+                 Combo.new
+               when "Pizza"
+                 Pizza.new
+               else
+                 Product.new
+               end
 
     # Para nuevos combos, agregar un combo_item vacío para el formulario
     if @product.is_a?(Combo)
@@ -108,12 +115,24 @@ class Dashboard::ProductsController < ApplicationController
                       end
         @product.grupo_id = combos_group.id
       end
+    elsif params[:product][:type] == "Pizza"
+      @product = Pizza.new(product_params)
+      # Si no se asigna grupo, buscar o crear el grupo "Pizzas"
+      if @product.grupo_id.blank?
+        pizzas_group = Grupo.find_by(nombre: "Pizzas") ||
+                      Grupo.find_by(nombre: "pizza") ||
+                      Grupo.find_by(nombre: "PIZZAS") ||
+                      Grupo.find_or_create_by(nombre: "Pizzas") do |grupo|
+                        grupo.descripcion = "Grupo para pizzas artesanales"
+                      end
+        @product.grupo_id = pizzas_group.id
+      end
     else
       @product = Product.new(product_params)
     end
 
     if @product.save
-      redirect_to dashboard_products_path, notice: "#{@product.type == 'Combo' ? 'Combo' : 'Producto'} creado exitosamente."
+      redirect_to dashboard_products_path, notice: "#{@product.type == 'Pizza' ? 'Pizza' : @product.type == 'Combo' ? 'Combo' : 'Producto'} creado exitosamente."
     else
       @ingredientes = Ingrediente.all
       @products_for_combo = Product.where(type: [ nil, "" ])
@@ -156,7 +175,8 @@ class Dashboard::ProductsController < ApplicationController
       :disponible,
       :calificacion,
       :type,
-      ingrediente_ids: []
+      ingrediente_ids: [],
+      tamanos_disponibles: []
     ]
 
     if params.dig(:product, :type) == "Combo"

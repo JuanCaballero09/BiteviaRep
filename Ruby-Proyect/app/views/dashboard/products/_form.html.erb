@@ -16,11 +16,11 @@
 
   <div>
     <%= f.label :type, "Tipo de producto" %>
-    <%= f.select :type, options_for_select([["Producto Normal", ""], ["Combo", "Combo"]], @product.type), {}, { class: "form-control", id: "product-type" } %>
+    <%= f.select :type, options_for_select([["Producto Normal", ""], ["Combo", "Combo"], ["Pizza", "Pizza"]], @product.type), {}, { class: "form-control", id: "product-type" } %>
   </div>
 
   <!-- Sección de ingredientes (solo para productos normales) -->
-  <div id="ingredientes-section" style="<%= 'display: none;' if @product.type == 'Combo' %>">
+  <div id="ingredientes-section" style="<%= 'display: none;' if @product.type == 'Combo' || @product.type == 'Pizza' %>">
     <div>
       <%= f.label :ingredientes, "Ingredientes" %><br>
       <div style="border: 1px solid #ccc; padding: 10px; height: 150px; overflow-y: auto; border-radius: 5px;" class="ingredientes-list">
@@ -66,12 +66,28 @@
     </div>
   </div>
 
+  <!-- Sección de tamaño (solo para pizzas) -->
+  <div id="pizza-section" style="<%= 'display: none;' unless @product.type == 'Pizza' %>">
+    <%= f.label :tamanos_disponibles, "Tamaños disponibles" %>
+    <div style="border: 1px solid #ccc; padding: 10px; border-radius: 5px; background-color: #f8f9fa;">
+      <% Pizza::TAMANOS.each do |tamano| %>
+        <label style="display: block; margin-bottom: 8px;">
+          <%= check_box_tag "product[tamanos_disponibles][]", tamano, (@product.is_a?(Pizza) && @product.tamanos_disponibles.include?(tamano)), { id: "tamano_#{tamano.downcase}", style: "vertical-align: middle; margin-right: 5px;" } %>
+          <span style="vertical-align: middle;"><%= tamano %></span>
+        </label>
+      <% end %>
+    </div>
+    <small style="color: #6c757d; display: block; margin-top: 5px;">
+      Selecciona los tamaños en los que esta pizza estará disponible
+    </small>
+  </div>
+
   <div>
     <%= f.label :descripcion %>
     <%= f.text_area :descripcion, required: true %>
   </div>
 
-  <div id="grupo-section" style="<%= 'display: none;' if @product.type == 'Combo' %>">
+  <div id="grupo-section" style="<%= 'display: none;' if @product.type == 'Combo' || @product.type == 'Pizza' %>">
     <%= f.label :grupo_id, "Grupo" %>
     <%= f.collection_select :grupo_id, Grupo.all, :id, :nombre, { prompt: "Seleccionar grupo" }, { required: false, id: "grupo-select" } %>
   </div>
@@ -112,6 +128,7 @@
     typeSelect: null,
     ingredientesSection: null,
     comboSection: null,
+    pizzaSection: null,
     addComboButton: null,
     comboItemsContainer: null,
     grupoSelect: null,
@@ -127,6 +144,7 @@
       this.typeSelect = document.getElementById("product-type");
       this.ingredientesSection = document.getElementById("ingredientes-section");
       this.comboSection = document.getElementById("combo-section");
+      this.pizzaSection = document.getElementById("pizza-section");
       this.addComboButton = document.getElementById("add-combo-item");
       this.comboItemsContainer = document.getElementById("combo-items");
       this.grupoSelect = document.getElementById("grupo-select");
@@ -164,11 +182,19 @@
       if (this.typeSelect.value === "Combo") {
         this.ingredientesSection.style.display = "none";
         this.comboSection.style.display = "block";
+        this.pizzaSection.style.display = "none";
+        document.getElementById("grupo-section").style.display = "none";
+        this.grupoSelect.required = false;
+      } else if (this.typeSelect.value === "Pizza") {
+        this.ingredientesSection.style.display = "block";
+        this.comboSection.style.display = "none";
+        this.pizzaSection.style.display = "block";
         document.getElementById("grupo-section").style.display = "none";
         this.grupoSelect.required = false;
       } else {
         this.ingredientesSection.style.display = "block";
         this.comboSection.style.display = "none";
+        this.pizzaSection.style.display = "none";
         document.getElementById("grupo-section").style.display = "block";
         this.grupoSelect.required = true;
       }
