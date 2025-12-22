@@ -1,9 +1,10 @@
 Rails.application.config.middleware.insert_before 0, Rack::Cors do
   allow do
-    origins '*' # O mejor: 'http://localhost:PORT' para desarrollo
+    origins "*"
 
-    resource '*',
+    resource "*",
       headers: :any,
-      methods: [:get, :post, :put, :patch, :delete, :options, :head]
+      methods: %i[get post patch put delete options],
+      expose: ["Authorization"] # rubocop:disable Layout/SpaceInsideArrayLiteralBrackets
   end
 end

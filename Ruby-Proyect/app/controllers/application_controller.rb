@@ -1,12 +1,12 @@
 class ApplicationController < ActionController::Base
-  allow_browser versions: :modern
+  allow_browser versions: :modern, block: -> { puts "Navegador antiguo detectado" }
   before_action :configure_permitted_parameters, if: :devise_controller?
   before_action :store_user_location!, if: :storable_location?
   before_action :set_locale
 
   config.after_initialize do
     Mime::Type.register "application/json", :json unless Mime::Type.lookup_by_extension(:json)
-  end
+  end 
 
   layout :layout_by_resource
 

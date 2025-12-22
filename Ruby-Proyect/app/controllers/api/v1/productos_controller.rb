@@ -4,7 +4,7 @@ class Api::V1::ProductosController < Api::V1::BaseController
   def combos
     combos = Product.where(type: "Combo", disponible: true)
                     .includes(:ingredientes, imagen_attachment: :blob)
-                    .order(created_at: :desc)
+                    .order(:id)
                     .limit(10)
 
     render json: combos.map { |combo|
