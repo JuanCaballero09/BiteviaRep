@@ -1,0 +1,148 @@
+<div class="modal-overlay" onclick="closeModal(event)">
+  <div class="modal-content" onclick="event.stopPropagation()">
+    <div class="modal-header">
+      <h3>🍕 Selecciona el tamaño de <%= pizza.nombre %></h3>
+      <button class="modal-close" onclick="closeModal()">&times;</button>
+    </div>
+    
+    <div class="modal-body">
+      <p class="modal-description"><%= pizza.descripcion %></p>
+      
+      <div class="size-options">
+        <% pizza.tamanos_disponibles.each do |tamano| %>
+          <%= button_to "#{tamano}", 
+                       carrito_items_path(product_id: pizza.id, tamano_selected: tamano), 
+                       method: :post,
+                       class: "size-option-btn",
+                       data: { turbo_stream: true } %>
+        <% end %>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+  .modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    animation: fadeIn 0.3s ease;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+
+  .modal-content {
+    background: white;
+    border-radius: 15px;
+    max-width: 500px;
+    width: 90%;
+    max-height: 80vh;
+    overflow-y: auto;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+    animation: slideUp 0.3s ease;
+  }
+
+  @keyframes slideUp {
+    from { 
+      transform: translateY(50px);
+      opacity: 0;
+    }
+    to { 
+      transform: translateY(0);
+      opacity: 1;
+    }
+  }
+
+  .modal-header {
+    padding: 20px;
+    border-bottom: 1px solid #eee;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .modal-header h3 {
+    margin: 0;
+    color: #333;
+    font-size: 1.5em;
+  }
+
+  .modal-close {
+    background: none;
+    border: none;
+    font-size: 2em;
+    color: #999;
+    cursor: pointer;
+    line-height: 1;
+    padding: 0;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: all 0.2s;
+  }
+
+  .modal-close:hover {
+    background: #f0f0f0;
+    color: #333;
+  }
+
+  .modal-body {
+    padding: 20px;
+  }
+
+  .modal-description {
+    color: #666;
+    margin-bottom: 20px;
+    line-height: 1.6;
+  }
+
+  .size-options {
+    display: grid;
+    gap: 15px;
+  }
+
+  .size-option-btn {
+    background: linear-gradient(135deg, #FF6B35 0%, #FF8C42 100%);
+    color: white;
+    border: none;
+    padding: 15px 25px;
+    border-radius: 10px;
+    font-size: 1.1em;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(255, 107, 53, 0.3);
+    text-align: center;
+  }
+
+  .size-option-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(255, 107, 53, 0.4);
+    background: linear-gradient(135deg, #FF8C42 0%, #FF6B35 100%);
+  }
+
+  .size-option-btn:active {
+    transform: translateY(0);
+  }
+</style>
+
+<script>
+  function closeModal(event) {
+    if (!event || event.target.classList.contains('modal-overlay')) {
+      document.getElementById('pizza-size-modal').remove();
+    }
+  }
+</script>

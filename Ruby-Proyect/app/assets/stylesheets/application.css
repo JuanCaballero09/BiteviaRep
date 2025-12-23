@@ -5210,6 +5210,22 @@ input:focus{outline: none;}
     margin: 0;
     font-weight: bold;
     line-height: 1.3;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+}
+
+.pizza-size-badge {
+    display: inline-block;
+    background: linear-gradient(135deg, #FF6B35 0%, #FF8C42 100%);
+    color: white;
+    padding: 4px 12px;
+    border-radius: 15px;
+    font-size: 0.75em;
+    font-weight: 600;
+    white-space: nowrap;
+    box-shadow: 0 2px 5px rgba(255, 107, 53, 0.3);
 }
 
 .item-precio-unitario {
