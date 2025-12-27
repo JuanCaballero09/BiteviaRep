@@ -2,9 +2,11 @@ class Sede < ApplicationRecord
   # Validaciones
   validates :nombre, presence: true, uniqueness: true
   validates :departamento, presence: true
-  validates :ciudad, presence: true
+  validates :municipio, presence: true
   validates :direccion, presence: true
   validates :latitud, :longitud, numericality: true, allow_nil: true
+  # Telefono: opcional, pero si está presente debe ser exactamente 10 dígitos numéricos
+  validates :telefono, format: { with: /\A\d{10}\z/, message: "debe contener exactamente 10 dígitos" }, allow_blank: true
 
   # Callbacks
   before_save :geocode_address, if: :should_geocode?
@@ -15,7 +17,7 @@ class Sede < ApplicationRecord
 
   # Retorna la dirección completa formateada
   def direccion_completa
-    parts = [direccion, barrio, ciudad, departamento].compact.reject(&:blank?)
+    parts = [ direccion, barrio, municipio, departamento ].compact.reject(&:blank?)
     parts.join(", ")
   end
 
@@ -28,7 +30,7 @@ class Sede < ApplicationRecord
   private
 
   def should_geocode?
-    (direccion_changed? || ciudad_changed? || departamento_changed?) && 
+    (direccion_changed? || municipio_changed? || departamento_changed?) &&
     (latitud.blank? || longitud.blank?)
   end
 

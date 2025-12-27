@@ -88,7 +88,7 @@ Rails.application.routes.draw do
   namespace :api do
     namespace :v1 do
       get "health", to: "health#check"
-      
+
       # Authentication endpoints
       post "login",  to: "auth#login"
       post "logout", to: "auth#logout"
@@ -97,10 +97,17 @@ Rails.application.routes.draw do
       post "reset_password", to: "auth#reset_password"
       post "resend_confirmation", to: "auth#resend_confirmation"
       get "confirm_email", to: "auth#confirm_email"
-      
+
       get "buscar", to: "busqueda#index"
+
       get "combos", to: "productos#combos"
-      resources :banners, only: [ :index ]
+
+      get "banners", to: "banners#index"
+
+      get "sedes", to: "sedes#index"
+
+      get "config/google_map_key", to: "config#google_map_key"
+
       resources :grupos, path: "categorias", only: [ :index, :show ] do
         resources :products, path: "productos", only: [ :index, :show ], module: :grupos
       end
@@ -117,7 +124,7 @@ Rails.application.routes.draw do
           end
         end
       end
-      
+
       # Wompi webhook endpoint
       post "webhooks/wompi", to: "payments#webhook"
     end

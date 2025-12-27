@@ -29,11 +29,11 @@
           <% @sedes.each do |sede| %>
             <tr class="sede-row" 
                 data-nombre="<%= sede.nombre %>" 
-                data-ciudad="<%= sede.ciudad %>" 
+                data-municipio="<%= sede.municipio %>" 
                 data-direccion="<%= sede.direccion %>">
               <td><%= sede.nombre %></td>
               <td>
-                <%= sede.ciudad %>, <%= sede.departamento %>
+                <%= sede.municipio %>, <%= sede.departamento %>
                 <% if sede.barrio.present? %>
                   <br><small style="color: #666;"><%= sede.barrio %></small>
                 <% end %>
@@ -156,10 +156,10 @@
 
       sedeRows.forEach((row) => {
         const nombre = normalizar(row.dataset.nombre);
-        const ciudad = normalizar(row.dataset.ciudad);
+        const municipio = normalizar(row.dataset.municipio);
         const direccion = normalizar(row.dataset.direccion);
 
-        const visible = nombre.includes(valor) || ciudad.includes(valor) || direccion.includes(valor);
+        const visible = nombre.includes(valor) || municipio.includes(valor) || direccion.includes(valor);
         row.style.display = visible ? "table-row" : "none";
         if (visible) visibles++;
       });

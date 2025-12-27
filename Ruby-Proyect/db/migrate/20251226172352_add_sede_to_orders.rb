@@ -1,0 +1,5 @@
+class AddSedeToOrders < ActiveRecord::Migration[8.0]
+  def change
+    add_reference :orders, :sede, null: false, foreign_key: true
+  end
+end

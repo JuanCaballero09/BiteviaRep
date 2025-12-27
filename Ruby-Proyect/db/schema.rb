@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_12_20_174019) do
+ActiveRecord::Schema[8.0].define(version: 2025_12_26_210835) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -164,9 +164,11 @@ ActiveRecord::Schema[8.0].define(version: 2025_12_20_174019) do
     t.string "guest_telefono"
     t.string "guest_email"
     t.decimal "costo_domicilio", precision: 10, scale: 2, default: "0.0"
+    t.bigint "sede_id", null: false
     t.index ["carrito_id"], name: "index_orders_on_carrito_id"
     t.index ["code"], name: "index_orders_on_code", unique: true
     t.index ["coupon_id"], name: "index_orders_on_coupon_id"
+    t.index ["sede_id"], name: "index_orders_on_sede_id"
     t.index ["user_id"], name: "index_orders_on_user_id"
   end
 
@@ -203,7 +205,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_12_20_174019) do
   create_table "sedes", force: :cascade do |t|
     t.string "nombre", null: false
     t.string "departamento", null: false
-    t.string "ciudad", null: false
+    t.string "municipio", null: false
     t.string "barrio"
     t.string "direccion", null: false
     t.decimal "latitud", precision: 10, scale: 6
@@ -256,6 +258,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_12_20_174019) do
   add_foreign_key "order_items", "products"
   add_foreign_key "orders", "carritos"
   add_foreign_key "orders", "coupons"
+  add_foreign_key "orders", "sedes"
   add_foreign_key "orders", "users"
   add_foreign_key "payments", "orders"
   add_foreign_key "products", "grupos"

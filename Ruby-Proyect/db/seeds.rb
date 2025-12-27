@@ -382,7 +382,9 @@ pizzas_data.each_with_index do |data, index|
       precio: data[:precio],
       descripcion: data[:descripcion],
       disponible: true,
-      grupo: grupos["Pizzas"]
+      grupo: grupos["Pizzas"],
+      type: "Pizza",
+      tamanos_disponibles: ["Mediana", "Personal"]
     )
 
     data[:ingredientes].each do |ing_nombre|

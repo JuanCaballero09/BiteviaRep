@@ -48,7 +48,7 @@ class Dashboard::SedesController < Dashboard::DashboardController
     params.require(:sede).permit(
       :nombre,
       :departamento,
-      :ciudad,
+      :municipio,
       :barrio,
       :direccion,
       :latitud,

@@ -27,7 +27,7 @@
 
       <div class="form-group">
         <%= f.label :telefono, "Teléfono" %>
-        <%= f.text_field :telefono, class: "form-control", placeholder: "Ej: +57 300 123 4567", id: "sede_telefono" %>
+        <%= f.text_field :telefono, type: "tel", class: "form-control", placeholder: "Ej: 3001234567 (10 dígitos)", id: "sede_telefono", inputmode: "numeric", pattern: "\\d{10}", minlength: 10, maxlength: 10, title: "Ingrese exactamente 10 dígitos numéricos" %>
       </div>
     </div>
 
@@ -48,8 +48,8 @@
       </div>
 
       <div class="form-group">
-        <%= f.label :ciudad, "Ciudad *" %>
-        <%= f.text_field :ciudad, class: "form-control", placeholder: "Ej: Barranquilla", required: true, id: "sede_ciudad" %>
+        <%= f.label :municipio, "Municipio *" %>
+        <%= f.text_field :municipio, class: "form-control", placeholder: "Ej: Barranquilla", required: true, id: "sede_municipio" %>
       </div>
     </div>
 
@@ -316,7 +316,7 @@ function initMap() {
   });
   
   // Escuchar cambios en los campos del formulario
-  const addressFields = ['sede_direccion', 'sede_ciudad', 'sede_departamento', 'sede_barrio'];
+  const addressFields = ['sede_direccion', 'sede_municipio', 'sede_departamento', 'sede_barrio'];
   addressFields.forEach(fieldId => {
     const field = document.getElementById(fieldId);
     if (field) {
@@ -333,16 +333,16 @@ function initMap() {
 // Geocodificar dirección a coordenadas (Formulario -> Mapa)
 function geocodeAddress() {
   const direccion = document.getElementById('sede_direccion').value;
-  const ciudad = document.getElementById('sede_ciudad').value;
+  const municipio = document.getElementById('sede_municipio').value;
   const departamento = document.getElementById('sede_departamento').value;
   const barrio = document.getElementById('sede_barrio').value;
   
-  if (!direccion || !ciudad) return;
+  if (!direccion || !municipio) return;
   
   // Construir dirección completa
   let fullAddress = direccion;
   if (barrio) fullAddress += ', ' + barrio;
-  fullAddress += ', ' + ciudad + ', ' + departamento + ', Colombia';
+  fullAddress += ', ' + municipio + ', ' + departamento + ', Colombia';
   
   geocoder.geocode({ address: fullAddress }, function(results, status) {
     if (status === 'OK' && results[0]) {
@@ -372,7 +372,7 @@ function geocodeLatLng(lat, lng) {
       let calle = '';
       let numero = '';
       let barrio = '';
-      let ciudad = '';
+      let municipio = '';
       let departamento = '';
       
       addressComponents.forEach(component => {
@@ -391,7 +391,7 @@ function geocodeLatLng(lat, lng) {
           barrio = component.long_name;
         }
         if (types.includes('locality')) {
-          ciudad = component.long_name;
+          municipio = component.long_name;
         }
         if (types.includes('administrative_area_level_1')) {
           departamento = component.long_name;
@@ -410,7 +410,7 @@ function geocodeLatLng(lat, lng) {
       // Actualizar formulario (ahora SÍ actualiza aunque tengan contenido)
       const direccionField = document.getElementById('sede_direccion');
       const barrioField = document.getElementById('sede_barrio');
-      const ciudadField = document.getElementById('sede_ciudad');
+      const municipioField = document.getElementById('sede_municipio');
       const departamentoField = document.getElementById('sede_departamento');
       
       if (direccionCompleta) {
@@ -419,8 +419,8 @@ function geocodeLatLng(lat, lng) {
       if (barrio) {
         barrioField.value = barrio;
       }
-      if (ciudad) {
-        ciudadField.value = ciudad;
+      if (municipio) {
+        municipioField.value = municipio;
       }
       if (departamento) {
         departamentoField.value = departamento;
@@ -429,7 +429,7 @@ function geocodeLatLng(lat, lng) {
       console.log('✅ Formulario actualizado:', {
         direccion: direccionCompleta,
         barrio: barrio,
-        ciudad: ciudad,
+        municipio: municipio,
         departamento: departamento
       });
     } else {
@@ -437,5 +437,20 @@ function geocodeLatLng(lat, lng) {
     }
   });
 }
+</script>
+<script>
+// Restringir el campo telefono a sólo dígitos y 10 caracteres
+document.addEventListener('turbo:load', function() {
+  var tel = document.getElementById('sede_telefono');
+  if (!tel) return;
+
+  tel.addEventListener('input', function(e) {
+    // eliminar todo lo que no sea dígito
+    var cleaned = this.value.replace(/\D/g, '');
+    // limitar a 10 dígitos
+    if (cleaned.length > 10) cleaned = cleaned.slice(0, 10);
+    if (this.value !== cleaned) this.value = cleaned;
+  });
+});
 </script>
 <script src="https://maps.googleapis.com/maps/api/js?key=<%= Rails.application.credentials.google_map[:key] %>&callback=initMap" async defer></script>
