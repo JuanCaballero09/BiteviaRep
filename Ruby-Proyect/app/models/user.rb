@@ -13,7 +13,7 @@ class User < ApplicationRecord
   before_create :generate_authentication_token
 
   # Enum roles
-  enum :rol, { cliente: 0, empleado: 1, admin: 2 }
+  enum :rol, { cliente: 0, empleado: 1, admin: 2, domiciliario: 3 }
 
   # Valores por defecto
   after_initialize :set_defaults, if: :new_record?

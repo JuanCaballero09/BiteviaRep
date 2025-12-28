@@ -111,23 +111,20 @@
   color: #856404;
 }
 
-.status-badge-large.status-en_preparacion {
-  background: linear-gradient(135deg, #cfe2ff 0%, #9ec5fe 100%);
-  color: #084298;
-}
-
-.status-badge-large.status-terminado {
+.status-badge-large.status-pagado {
   background: linear-gradient(135deg, #d1e7dd 0%, #a3cfbb 100%);
   color: #0f5132;
 }
 
-.status-badge-large.status-en_transito {
-  background: linear-gradient(135deg, #e2d9f3 0%, #c5aedd 100%);
-  color: #6f42c1;
+.status-badge-large.status-tomado {
+  background: linear-gradient(135deg, #cfe2ff 0%, #9ec5fe 100%);
+  color: #084298;
 }
 
-.status-badge-large.status-entregado {
+.status-badge-large.status-finalizado {
   background: linear-gradient(135deg, #d1e7dd 0%, #a3cfbb 100%);
+  color: #0a3622;
+}
   color: #0a3622;
 }
 

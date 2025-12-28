@@ -78,7 +78,7 @@ class Api::V1::AuthController < ApplicationController
     if user.save
       # Enviar email de confirmación
       user.send_confirmation_instructions
-      
+
       render json: {
         message: "Usuario registrado exitosamente. Por favor revisa tu correo para confirmar tu cuenta.",
         user: {
@@ -90,9 +90,9 @@ class Api::V1::AuthController < ApplicationController
         }
       }, status: :created
     else
-      render json: { 
+      render json: {
         error: user.errors.full_messages.first || "Error al registrar usuario",
-        errors: user.errors.full_messages 
+        errors: user.errors.full_messages
       }, status: :unprocessable_entity
     end
   end
@@ -102,12 +102,12 @@ class Api::V1::AuthController < ApplicationController
 
     if user
       user.send_reset_password_instructions
-      render json: { 
-        message: "Se han enviado las instrucciones para restablecer tu contraseña al correo electrónico proporcionado." 
+      render json: {
+        message: "Se han enviado las instrucciones para restablecer tu contraseña al correo electrónico proporcionado."
       }, status: :ok
     else
-      render json: { 
-        error: "No se encontró ningún usuario con ese correo electrónico." 
+      render json: {
+        error: "No se encontró ningún usuario con ese correo electrónico."
       }, status: :not_found
     end
   end
@@ -120,13 +120,13 @@ class Api::V1::AuthController < ApplicationController
     )
 
     if user.errors.empty?
-      render json: { 
-        message: "Contraseña restablecida exitosamente. Ya puedes iniciar sesión con tu nueva contraseña." 
+      render json: {
+        message: "Contraseña restablecida exitosamente. Ya puedes iniciar sesión con tu nueva contraseña."
       }, status: :ok
     else
-      render json: { 
+      render json: {
         error: "Error al restablecer la contraseña",
-        errors: user.errors.full_messages 
+        errors: user.errors.full_messages
       }, status: :unprocessable_entity
     end
   end
@@ -136,18 +136,18 @@ class Api::V1::AuthController < ApplicationController
 
     if user
       if user.confirmed?
-        render json: { 
-          error: "Esta cuenta ya ha sido confirmada." 
+        render json: {
+          error: "Esta cuenta ya ha sido confirmada."
         }, status: :unprocessable_entity
       else
         user.send_confirmation_instructions
-        render json: { 
-          message: "Se ha reenviado el correo de confirmación." 
+        render json: {
+          message: "Se ha reenviado el correo de confirmación."
         }, status: :ok
       end
     else
-      render json: { 
-        error: "No se encontró ningún usuario con ese correo electrónico." 
+      render json: {
+        error: "No se encontró ningún usuario con ese correo electrónico."
       }, status: :not_found
     end
   end
@@ -156,7 +156,7 @@ class Api::V1::AuthController < ApplicationController
     user = User.confirm_by_token(params[:confirmation_token])
 
     if user.errors.empty?
-      render json: { 
+      render json: {
         message: "Tu cuenta ha sido confirmada exitosamente. Ya puedes iniciar sesión.",
         user: {
           id: user.id,
@@ -167,9 +167,9 @@ class Api::V1::AuthController < ApplicationController
         }
       }, status: :ok
     else
-      render json: { 
+      render json: {
         error: "Error al confirmar la cuenta",
-        errors: user.errors.full_messages 
+        errors: user.errors.full_messages
       }, status: :unprocessable_entity
     end
   end

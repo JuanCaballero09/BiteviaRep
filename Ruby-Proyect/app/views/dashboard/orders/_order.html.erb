@@ -27,14 +27,14 @@
     </div>
     <div class="btn-orden">
         <% if order.pagado? %>
-          <%= button_to "Marcar como En preparación",
-                  cambiar_estado_dashboard_order_path(order, order: { status: :en_preparacion }),
+          <%= button_to "Tomar Orden",
+                  cambiar_estado_dashboard_order_path(order, order: { status: :tomado }),
                   method: :patch,
                   data: { turbo_stream: true },
                   class: "order-action-btn order-action-btn-preparar" %>
-        <% elsif order.en_preparacion? %>
-          <%= button_to "Marcar como Enviado",
-                  cambiar_estado_dashboard_order_path(order, order: { status: :enviado }),
+        <% elsif order.tomado? %>
+          <%= button_to "Marcar como Finalizado",
+                  cambiar_estado_dashboard_order_path(order, order: { status: :finalizado }),
                   method: :patch,
                   data: { turbo_stream: true },
                   class: "order-action-btn order-action-btn-enviar" %>

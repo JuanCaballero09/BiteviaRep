@@ -73,8 +73,6 @@ Rails.application.routes.draw do
       end
       member do
         patch :cambiar_estado
-        patch :cancelar
-        patch :finalizar
       end
     end
     resources :products, path: "productos" do
@@ -113,7 +111,6 @@ Rails.application.routes.draw do
       end
       resources :orders, param: :code, only: [ :index, :show, :create ] do
         member do
-          patch :cancel
           patch :update_address
         end
         # Payment endpoints

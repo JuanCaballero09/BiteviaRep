@@ -78,16 +78,6 @@
               <td class="orders-td orders-td--actions" data-label="Acciones">
                   <div style="display: flex; gap: 8px; align-items: center; justify-content: center; flex-wrap: wrap;">
                   <%= link_to t("home.ordenes.ver_detalles"), dashboard_order_path(order), class: "btn-eliminar", style: "margin: 0;" %>
-                  
-                  <% if order.enviado? %>
-                    <%= button_to finalizar_dashboard_order_path(order),
-                          method: :patch,
-                          data: { turbo_confirm: "¿Finalizar esta orden?" },
-                          class: "btn-finalizar-order",
-                          style: "margin: 0; padding: 8px 16px; background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%); color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 14px; font-weight: 500; box-shadow: 0 2px 4px rgba(76, 175, 80, 0.3); transition: all 0.3s ease;" do %>
-                      Finalizar
-                    <% end %>
-                  <% end %>
                 </div>
               </td>
             </tr>

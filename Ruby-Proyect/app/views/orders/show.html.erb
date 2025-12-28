@@ -40,14 +40,12 @@
               <% case @order.status.downcase %>
               <% when 'pendiente' %>
                 Tu pedido está esperando confirmación de pago
-              <% when 'en_preparacion' %>
+              <% when 'pagado' %>
+                Tu pago ha sido confirmado. Pronto tomaremos tu orden
+              <% when 'tomado' %>
                 Estamos preparando tu pedido con mucho cuidado
-              <% when 'terminado' %>
-                Tu pedido está listo para ser enviado
-              <% when 'en_transito' %>
-                Tu pedido va en camino a tu ubicación
-              <% when 'entregado' %>
-                ¡Tu pedido ha sido entregado exitosamente!
+              <% when 'finalizado' %>
+                ¡Tu pedido ha sido completado exitosamente!
               <% end %>
             </p>
           </div>

@@ -9,11 +9,8 @@ class Order < ApplicationRecord
   enum :status, {
     pendiente: 0,
     pagado: 1,
-    en_preparacion: 2,
-    enviado: 3,
-    finalizado: 4,
-    cancelado: 5,
-    pendiente_confirmacion_pago: 6
+    tomado: 2,
+    finalizado: 3
   }
 
   scope :by_user, ->(user) { where(user_id: user.id) }
@@ -129,7 +126,7 @@ class Order < ApplicationRecord
 
   # Verifica si la orden puede ser cancelada
   def can_be_cancelled?
-    pendiente? || pagado?
+    pendiente? || pagado? || tomado?
   end
 
   # Calcula subtotal sin descuento

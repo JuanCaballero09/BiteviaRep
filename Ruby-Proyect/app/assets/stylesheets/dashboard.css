@@ -780,42 +780,12 @@
     margin: 5px auto;
 }
 
-.status-en_preparacion p, .status-en_preparacion span {
+.status-tomado p, .status-tomado span {
     padding: 8px 10px;
     border-radius: 10px;
     color: white;
     text-align: center;
     background-color: #2980b9;  /* azul */
-    font-weight: 600;
-    margin: 5px auto;
-}
-
-.status-enviado p, .status-enviado span {
-    padding: 8px 10px;
-    border-radius: 10px;
-    color: white;
-    text-align: center;
-    background-color: #8e44ad;  /* morado */
-    font-weight: 600;
-    margin: 5px auto;
-}
-
-.status-entregado p, .status-entregado span {
-    padding: 8px 10px;
-    border-radius: 10px;
-    color: white;
-    text-align: center;
-    background-color: #16a085;  /* verde oscuro */
-    font-weight: 600;
-    margin: 5px auto;
-}
-
-.status-cancelado p, .status-cancelado span {
-    padding: 8px 10px;
-    border-radius: 10px;
-    color: white;
-    text-align: center;
-    background-color: #c0392b;  /* rojo */
     font-weight: 600;
     margin: 5px auto;
 }
@@ -826,16 +796,6 @@
     color: white;
     text-align: center;
     background-color: #008080;  /* turquesa/cyan */
-    font-weight: 600;
-    margin: 5px auto;
-}
-
-.status-pendiente_confirmacion_pago p, .status-pendiente_confirmacion_pago span {
-    padding: 8px 10px;
-    border-radius: 10px;
-    color: white;
-    text-align: center;
-    background-color: #FF9800;  /* naranja - esperando confirmación */
     font-weight: 600;
     margin: 5px auto;
 }

@@ -4,8 +4,8 @@
 
 class Api::V1::OrdersController < ApplicationController
   skip_before_action :verify_authenticity_token
-  before_action :authenticate_api_user!, except: [:create, :index, :update_address, :cancel]
-  before_action :set_order, only: [:show, :cancel, :update_address]
+  before_action :authenticate_api_user!, except: [ :create, :index, :update_address, :cancel ]
+  before_action :set_order, only: [ :show, :cancel, :update_address ]
 
   # GET /api/v1/orders
   # Obtiene todas las órdenes del usuario autenticado O de invitado por email
@@ -13,7 +13,7 @@ class Api::V1::OrdersController < ApplicationController
     if api_user_signed_in?
       # Usuario autenticado: obtener todas sus órdenes + órdenes de invitado con el mismo email
       user_email = @current_user.email.strip.downcase
-      
+
       @orders = Order.where(
         "user_id = ? OR (user_id IS NULL AND LOWER(guest_email) = ?)",
         @current_user.id,
@@ -21,7 +21,7 @@ class Api::V1::OrdersController < ApplicationController
       )
       .includes({ order_items: :product }, :coupon)
       .order(created_at: :desc)
-      
+
       render json: @orders.map { |order| order_json(order) }
     else
       # Usuario invitado: buscar por email
@@ -71,7 +71,7 @@ class Api::V1::OrdersController < ApplicationController
       else
         # Usuario invitado - validar datos requeridos
         validate_guest_params!
-        
+
         @order = Order.new(
           status: :pendiente,
           total: 0,
@@ -84,7 +84,7 @@ class Api::V1::OrdersController < ApplicationController
       end
 
       @order.carrito = carrito
-      
+
       # Aplicar cupón si existe
       if order_params[:coupon_code].present?
         coupon = Coupon.find_by(codigo: order_params[:coupon_code])
@@ -97,18 +97,18 @@ class Api::V1::OrdersController < ApplicationController
 
       # Crear order_items desde los items enviados
       items_data = params[:items] || params[:order_items] || []
-      
+
       if items_data.blank?
-        render json: { errors: ["No se enviaron productos para la orden"] }, status: :unprocessable_entity
+        render json: { errors: [ "No se enviaron productos para la orden" ] }, status: :unprocessable_entity
         raise ActiveRecord::Rollback
         return
       end
 
       items_data.each do |item_params|
         product = Product.find_by(id: item_params[:product_id])
-        
+
         unless product
-          render json: { errors: ["Producto con ID #{item_params[:product_id]} no encontrado"] }, status: :unprocessable_entity
+          render json: { errors: [ "Producto con ID #{item_params[:product_id]} no encontrado" ] }, status: :unprocessable_entity
           raise ActiveRecord::Rollback
           return
         end
@@ -139,22 +139,7 @@ class Api::V1::OrdersController < ApplicationController
   rescue ActiveRecord::RecordInvalid => e
     render json: { errors: e.record.errors.full_messages }, status: :unprocessable_entity
   rescue ActiveRecord::RecordNotFound => e
-    render json: { errors: ["Recurso no encontrado: #{e.message}"] }, status: :not_found
-  end
-
-  # PATCH /api/v1/orders/:code/cancel
-  # Cancela una orden (solo si está pendiente o pagada)
-  def cancel
-    unless @order.can_be_cancelled?
-      render json: { error: "Esta orden no puede ser cancelada" }, status: :unprocessable_entity
-      return
-    end
-
-    if @order.update(status: :cancelado)
-      render json: order_json(@order)
-    else
-      render json: { errors: @order.errors.full_messages }, status: :unprocessable_entity
-    end
+    render json: { errors: [ "Recurso no encontrado: #{e.message}" ] }, status: :not_found
   end
 
   # PATCH /api/v1/orders/:code/update_address
@@ -162,8 +147,8 @@ class Api::V1::OrdersController < ApplicationController
   def update_address
     # Solo permitir actualizar si está en pendiente o pagado
     unless @order.pendiente? || @order.pagado?
-      render json: { 
-        error: "No se puede actualizar la dirección. La orden ya está en preparación o fue entregada." 
+      render json: {
+        error: "No se puede actualizar la dirección. La orden ya está en preparación o fue entregada."
       }, status: :unprocessable_entity
       return
     end
@@ -197,7 +182,7 @@ class Api::V1::OrdersController < ApplicationController
     if api_user_signed_in?
       # Usuario autenticado: buscar en sus órdenes O en órdenes de invitado con su email
       user_email = @current_user.email.strip.downcase
-      
+
       @order = Order.includes({ order_items: :product })
                    .where(
                      "code = ? AND (user_id = ? OR (user_id IS NULL AND LOWER(guest_email) = ?))",
@@ -245,7 +230,7 @@ class Api::V1::OrdersController < ApplicationController
 
   def order_params
     params_hash = params[:order] || params
-    
+
     {
       direccion: params_hash[:direccion] || params_hash[:address],
       guest_nombre: params_hash[:guest_nombre],
@@ -257,11 +242,11 @@ class Api::V1::OrdersController < ApplicationController
   end
 
   def validate_guest_params!
-    required_fields = [:guest_nombre, :guest_apellido, :guest_telefono, :guest_email]
+    required_fields = [ :guest_nombre, :guest_apellido, :guest_telefono, :guest_email ]
     missing_fields = required_fields.select { |field| order_params[field].blank? }
 
     if missing_fields.any?
-      render json: { errors: ["Debes completar todos los campos requeridos: #{missing_fields.join(', ')}"] }, status: :unprocessable_entity
+      render json: { errors: [ "Debes completar todos los campos requeridos: #{missing_fields.join(', ')}" ] }, status: :unprocessable_entity
       raise ActiveRecord::Rollback
     end
   end
@@ -299,9 +284,9 @@ class Api::V1::OrdersController < ApplicationController
             precio: item.product.precio.to_f,
             imagen_url: if item.product.imagen.attached?
                          Rails.application.routes.url_helpers.rails_blob_path(item.product.imagen, only_path: true)
-                       else
+                        else
                          nil
-                       end
+                        end
           }
         }
       end,
