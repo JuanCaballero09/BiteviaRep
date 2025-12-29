@@ -14,7 +14,7 @@ class GruposController < ApplicationController
     end
 
     @combos_group = combos_group
-    @combos = combos_group&.products&.where(type: "Combo", disponible: true) || []
+    @combos = combos_group&.products&.where(type: "Combo", disponible: true, activo: true) || []
   end
 
   # GET /grupos/1 or /grupos/1.json
@@ -25,9 +25,9 @@ class GruposController < ApplicationController
     # Buscar combos desde cualquier grupo, pero preferir el grupo específico de combos
     combos_group = Grupo.find_by(nombre: [ "Combos", "combo", "COMBOS" ])
     if combos_group
-      @combos = combos_group.products.where(type: "Combo", disponible: true).order(created_at: :desc).limit(6)
+      @combos = combos_group.products.where(type: "Combo", disponible: true, activo: true).order(created_at: :desc).limit(6)
     else
-      @combos = Product.where(type: "Combo", disponible: true).order(created_at: :desc).limit(6)
+      @combos = Product.where(type: "Combo", disponible: true, activo: true).order(created_at: :desc).limit(6)
     end
   end
 

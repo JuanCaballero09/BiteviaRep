@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_12_20_174019) do
+ActiveRecord::Schema[8.0].define(version: 2025_12_28_215410) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -128,6 +128,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_12_20_174019) do
     t.bigint "ingrediente_id", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.decimal "cantidad", default: "1.0", null: false
     t.index ["ingrediente_id"], name: "index_ingrediente_productos_on_ingrediente_id"
     t.index ["product_id"], name: "index_ingrediente_productos_on_product_id"
   end
@@ -136,6 +137,10 @@ ActiveRecord::Schema[8.0].define(version: 2025_12_20_174019) do
     t.string "nombre"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.decimal "stock", default: "0.0", null: false
+    t.decimal "stock_minimo", default: "0.0", null: false
+    t.decimal "stock_bajo", default: "5.0", null: false
+    t.boolean "bloqueado", default: false, null: false
   end
 
   create_table "order_items", force: :cascade do |t|
@@ -164,6 +169,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_12_20_174019) do
     t.string "guest_telefono"
     t.string "guest_email"
     t.decimal "costo_domicilio", precision: 10, scale: 2, default: "0.0"
+    t.boolean "ingredientes_descontados", default: false, null: false
     t.index ["carrito_id"], name: "index_orders_on_carrito_id"
     t.index ["code"], name: "index_orders_on_code", unique: true
     t.index ["coupon_id"], name: "index_orders_on_coupon_id"
@@ -196,6 +202,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_12_20_174019) do
     t.decimal "calificacion", precision: 2, scale: 1
     t.string "type"
     t.string "tamanos_disponibles", default: [], array: true
+    t.boolean "activo", default: true, null: false
     t.index ["grupo_id"], name: "index_products_on_grupo_id"
     t.index ["type"], name: "index_products_on_type"
   end

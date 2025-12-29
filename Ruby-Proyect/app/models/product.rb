@@ -12,6 +12,7 @@ class Product < ApplicationRecord
   validates :nombre, :descripcion, :precio, presence: true
 
   before_create :asignar_id_menor
+  before_save :verificar_disponibilidad_ingredientes
 
   has_one_attached :imagen do |attachable|
     attachable.variant :thumb, resize_to_limit: [ 150, 150 ], preprocessed: true
@@ -55,6 +56,54 @@ class Product < ApplicationRecord
     ).processed
   end
 
+  # Verifica si el producto está disponible para la venta
+  def disponible?
+    activo && ingredientes_disponibles?
+  end
+
+  # Verifica si todos los ingredientes del producto están disponibles
+  def ingredientes_disponibles?
+    return true if ingredientes.empty?
+    ingredientes.all? { |ingrediente| !ingrediente.bloqueado }
+  end
+
+  # Scope para productos activos
+  scope :activos, -> { where(activo: true) }
+  scope :disponibles, -> {
+    joins(:ingredientes)
+      .where(activo: true, ingredientes: { bloqueado: false })
+      .distinct
+  }
+
+  # Método para verificar y actualizar el estado basado en ingredientes (público)
+  def actualizar_estado_por_ingredientes!
+    ingredientes.reload
+    tiene_ingredientes_bloqueados = ingredientes.any?(&:bloqueado)
+    
+    if tiene_ingredientes_bloqueados && (activo || disponible)
+      update_columns(activo: false, disponible: false)
+      Rails.logger.info "🔴 Producto #{nombre} desactivado - ingredientes agotados: #{ingredientes.where(bloqueado: true).pluck(:nombre).join(', ')}"
+      true
+    elsif !tiene_ingredientes_bloqueados && (!activo || !disponible)
+      update_columns(activo: true, disponible: true)
+      Rails.logger.info "🟢 Producto #{nombre} reactivado - ingredientes disponibles"
+      true
+    else
+      Rails.logger.info "⏭️  Producto #{nombre} - sin cambios (activo: #{activo}, disponible: #{disponible}, tiene_bloqueados: #{tiene_ingredientes_bloqueados})"
+      false
+    end
+  end
+  
+  # Método de clase para actualizar todos los productos que usan cierto ingrediente
+  def self.actualizar_por_ingrediente(ingrediente)
+    productos_afectados = ingrediente.products
+    Rails.logger.info "🔄 Actualizando #{productos_afectados.count} productos que usan #{ingrediente.nombre}"
+    
+    productos_afectados.each do |producto|
+      producto.actualizar_estado_por_ingredientes!
+    end
+  end
+
   private
 
   def asignar_id_menor
@@ -69,4 +118,17 @@ class Product < ApplicationRecord
 
     self.id = posible_id
   end
+
+  def verificar_disponibilidad_ingredientes
+    # Si algún ingrediente está bloqueado, desactivar el producto
+    if ingredientes.any?(&:bloqueado)
+      self.activo = false
+      Rails.logger.info "🔴 Producto #{nombre} desactivado por ingredientes bloqueados"
+    elsif ingredientes.all? { |ing| !ing.bloqueado }
+      # Solo reactivar si TODOS los ingredientes están disponibles
+      self.activo = true
+      Rails.logger.info "🟢 Producto #{nombre} reactivado - todos los ingredientes disponibles"
+    end
+  end
 end
+

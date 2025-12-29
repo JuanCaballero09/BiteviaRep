@@ -58,7 +58,11 @@ Rails.application.routes.draw do
   namespace :dashboard do
     root to: "dashboard#index"
     resources :grupos, path: "grupos"
-    resources :ingredientes
+    resources :ingredientes do
+      member do
+        post :actualizar_stock
+      end
+    end
     resources :users
     resources :banners
     resources :sedes

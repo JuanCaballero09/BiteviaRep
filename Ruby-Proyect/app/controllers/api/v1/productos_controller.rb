@@ -2,7 +2,7 @@ class Api::V1::ProductosController < Api::V1::BaseController
   skip_before_action :authenticate_user!, only: [:combos]
 
   def combos
-    combos = Product.where(type: "Combo", disponible: true)
+    combos = Product.where(type: "Combo", disponible: true, activo: true)
                     .includes(:ingredientes, imagen_attachment: :blob)
                     .order(:id)
                     .limit(10)
