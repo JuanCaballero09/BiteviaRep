@@ -16,14 +16,14 @@ class BusquedaController < ApplicationController
         terms.all? { |t| normalizado.include?(t) }
       end.sort_by(&:id)
 
-      @productos = Product.includes(imagen_attachment: :blob).select do |p|
+      @productos = Product.where(activo: true).includes(imagen_attachment: :blob).select do |p|
         normalizado = I18n.transliterate(p.nombre.downcase.strip)
         terms.all? { |t| normalizado.include?(t) }
       end.sort_by(&:id)
 
       # Redirigir si hay coincidencia exacta
-      if exacto.present? && @productos.size == 1
-        redirect_to grupo_producto_path(exacto.grupo, exacto) and return
+      if exacto.present? && @productos.size == 1 && exacto.grupo.present?
+        redirect_to grupo_product_path(exacto.grupo, exacto) and return
       end
     else
       @grupos = []

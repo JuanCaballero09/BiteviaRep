@@ -19,7 +19,7 @@ module Api
           end.sort_by(&:id)
 
           # Buscar productos que coincidan (en nombre del producto o nombre del grupo)
-          @productos = Product.includes({ imagen_attachment: :blob }, :grupo).select do |p|
+          @productos = Product.where(activo: true).includes({ imagen_attachment: :blob }, :grupo).select do |p|
             normalizado_producto = I18n.transliterate(p.nombre.downcase.strip)
             normalizado_grupo = p.grupo ? I18n.transliterate(p.grupo.nombre.downcase.strip) : ""
 

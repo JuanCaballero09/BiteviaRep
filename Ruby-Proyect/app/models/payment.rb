@@ -27,13 +27,13 @@ class Payment < ApplicationRecord
   def sync_order_status
     case status
     when "approved"
-      # Marcar orden como pagada también para efectivo
-      order.update(status: :pagado) if order.pendiente?
+      # Marcar orden como pagada (esto debe disparar el descuento de ingredientes)
+      order.update(status: :pagado) unless order.pagado?
 
       OrdersMailer.payment_confirmation(order).deliver_now
 
     when "declined"
-      order.update(status: :pendiente) if order.pendiente?
+      order.update(status: :pendiente) if order.pagado? == false
 
     when "cancelled"
       order.update(status: :cancelado)

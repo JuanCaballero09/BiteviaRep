@@ -1,13 +1,57 @@
-<h1><%= @ingrediente.new_record? ? "Nuevo" : "Editar" %> Ingrediente</h1>
+<section>
+  <h2>Editar Ingrediente</h2>
 
-<%= form_with model: [:dashboard, @ingrediente], local: true, html: { class: "dashboard-form" } do |f| %>
-  <div>
-    <%= f.label :nombre %>
-    <%= f.text_field :nombre, required: true  %>
-  </div>
+  <%= form_with model: [:dashboard, @ingrediente], local: true, html: { class: "dashboard-form" } do |f| %>
+    <div>
+      <%= f.label :nombre, "Nombre del Ingrediente" %>
+      <%= f.text_field :nombre, required: true, placeholder: "Ej: Pan de perros" %>
+    </div>
 
-  <div>
-    <%= f.submit "Actualizar Ingrediente" %>
-    <%= link_to 'Volver', dashboard_ingredientes_path %>
-  </div>
-<% end %>
+    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; margin-top: 15px;">
+      <div>
+        <%= f.label :stock, "Stock Actual" %>
+        <%= f.number_field :stock, min: 0, step: 0.01, required: true, 
+            style: "width: 100%;", placeholder: "100" %>
+        <small style="color: #666; display: block; margin-top: 5px;">Cantidad disponible</small>
+      </div>
+      
+      <div>
+        <%= f.label :stock_bajo, "Stock Bajo" %>
+        <%= f.number_field :stock_bajo, min: 0, step: 0.01, required: true, 
+            style: "width: 100%;", placeholder: "15" %>
+        <small style="color: #666; display: block; margin-top: 5px;">🟡 Alerta amarilla</small>
+      </div>
+      
+      <div>
+        <%= f.label :stock_minimo, "Stock Mínimo" %>
+        <%= f.number_field :stock_minimo, min: 0, step: 0.01, required: true, 
+            style: "width: 100%;", placeholder: "5" %>
+        <small style="color: #666; display: block; margin-top: 5px;">🔴 Nivel crítico</small>
+      </div>
+    </div>
+
+    <% if @ingrediente.bloqueado %>
+      <div style="background: #f8d7da; color: #721c24; padding: 15px; border-radius: 5px; margin-top: 15px; border-left: 4px solid #f5c6cb;">
+        <strong>🔒 INGREDIENTE BLOQUEADO</strong>
+        <p style="margin: 5px 0 0 0;">Este ingrediente está agotado. Los productos asociados están desactivados.</p>
+      </div>
+    <% end %>
+
+    <div style="background: #f8f9fa; padding: 15px; border-radius: 5px; margin-top: 15px;">
+      <strong>ℹ️ Información:</strong>
+      <ul style="margin: 10px 0 0 20px; color: #666;">
+        <li><strong>Stock:</strong> Cantidad actual disponible</li>
+        <li><strong>Stock Bajo:</strong> Se enviará alerta cuando llegue a este nivel</li>
+        <li><strong>Stock Mínimo:</strong> Se bloqueará el ingrediente y productos al llegar aquí</li>
+      </ul>
+      <p style="margin-top: 10px; color: #856404; background: #fff3cd; padding: 10px; border-radius: 4px;">
+        <strong>💡 Tip:</strong> Para actualizar el stock regularmente, usa el botón "📦 Actualizar Stock" en la lista de ingredientes.
+      </p>
+    </div>
+
+    <div style="margin-top: 20px;">
+      <%= f.submit "Actualizar Ingrediente", class: "btn-editar" %>
+      <%= link_to 'Volver', dashboard_ingredientes_path, class: "btn-cancelar" %>
+    </div>
+  <% end %>
+</section>

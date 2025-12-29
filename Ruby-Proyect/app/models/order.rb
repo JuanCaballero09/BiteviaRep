@@ -5,6 +5,7 @@ class Order < ApplicationRecord
   has_many :order_items, dependent: :destroy
   has_many :payments
   after_save :update_total
+  after_commit :descontar_ingredientes_si_pagado, on: :update
 
   enum :status, {
     pendiente: 0,
@@ -188,5 +189,51 @@ class Order < ApplicationRecord
         break
       end
     end
+  end
+
+  # Descuenta los ingredientes del stock cuando la orden es pagada
+  def descontar_ingredientes_si_pagado
+    Rails.logger.info "🔍 Verificando descuento para orden #{code}. Status: #{status}, Cambió: #{saved_change_to_status?}, Es pagado: #{pagado?}, Ya descontado: #{ingredientes_descontados}"
+    
+    # Solo descontar si cambió a pagado y no se había descontado antes
+    unless saved_change_to_status? && pagado?
+      Rails.logger.info "⏭️  Saltando descuento: no cambió a pagado"
+      return
+    end
+    
+    if ingredientes_descontados
+      Rails.logger.info "⏭️  Saltando descuento: ingredientes ya fueron descontados previamente"
+      return
+    end
+
+    Rails.logger.info "🔄 Descontando ingredientes para orden #{code}"
+
+    order_items.includes(product: { ingrediente_productos: :ingrediente }).each do |item|
+      producto = item.product
+      cantidad_vendida = item.quantity
+
+      Rails.logger.info "  📦 Producto: #{producto.nombre} x #{cantidad_vendida}"
+
+      # Descontar cada ingrediente del producto
+      producto.ingrediente_productos.each do |ip|
+        ingrediente = ip.ingrediente
+        cantidad_a_descontar = ip.cantidad * cantidad_vendida
+
+        Rails.logger.info "    🥗 Ingrediente: #{ingrediente.nombre}"
+        Rails.logger.info "       Stock antes: #{ingrediente.stock}"
+        Rails.logger.info "       A descontar: #{cantidad_a_descontar} (#{ip.cantidad} por unidad × #{cantidad_vendida})"
+
+        ingrediente.reducir_stock(cantidad_a_descontar)
+
+        Rails.logger.info "       Stock después: #{ingrediente.reload.stock}"
+      end
+    end
+
+    # Marcar como descontado para evitar duplicados
+    update_column(:ingredientes_descontados, true)
+    Rails.logger.info "✅ Ingredientes descontados correctamente para orden #{code}"
+  rescue StandardError => e
+    Rails.logger.error "❌ Error al descontar ingredientes para orden #{code}: #{e.message}"
+    Rails.logger.error e.backtrace.first(5).join("\n")
   end
 end

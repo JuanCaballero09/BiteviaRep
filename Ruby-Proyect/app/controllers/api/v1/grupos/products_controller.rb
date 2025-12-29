@@ -2,7 +2,7 @@ class Api::V1::Grupos::ProductsController < Api::V1::BaseController
   skip_before_action :authenticate_user!, only: [:index, :show] # rubocop:disable Layout/SpaceInsideArrayLiteralBrackets
   def index
     grupo = Grupo.find(params[:grupo_id])
-    producto = grupo.products.order(:id)
+    producto = grupo.products.where(disponible: true, activo: true).order(:id)
     render json: producto.map { |producto|
       producto.as_json.merge(
         type: producto.type,

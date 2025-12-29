@@ -2,7 +2,7 @@ class Dashboard::IngredientesController < ApplicationController
   layout "dashboard"
   before_action :authenticate_user!
   before_action :check_admin
-  before_action :set_ingrediente, only: [:edit, :update, :destroy] # rubocop:disable Layout/SpaceInsideArrayLiteralBrackets
+  before_action :set_ingrediente, only: [ :edit, :update, :destroy, :actualizar_stock ]
 
   def index
     if params[:query].present?
@@ -45,6 +45,35 @@ class Dashboard::IngredientesController < ApplicationController
     redirect_to dashboard_ingredientes_path, notice: "Ingrediente eliminado."
   end
 
+  # POST /dashboard/ingredientes/:id/actualizar_stock
+  # Actualiza el stock del ingrediente
+  def actualizar_stock
+    cantidad = params[:cantidad].to_f
+    tipo = params[:tipo] # 'agregar' o 'reducir'
+
+    if cantidad <= 0
+      redirect_to dashboard_ingredientes_path, alert: "La cantidad debe ser mayor a 0."
+      return
+    end
+
+    if tipo == "agregar"
+      @ingrediente.aumentar_stock(cantidad)
+      mensaje = "Stock aumentado en #{cantidad} unidades."
+    elsif tipo == "reducir"
+      if @ingrediente.stock < cantidad
+        redirect_to dashboard_ingredientes_path, alert: "No hay suficiente stock para reducir."
+        return
+      end
+      @ingrediente.reducir_stock(cantidad)
+      mensaje = "Stock reducido en #{cantidad} unidades."
+    else
+      redirect_to dashboard_ingredientes_path, alert: "Tipo de operación inválido."
+      return
+    end
+
+    redirect_to dashboard_ingredientes_path, notice: "#{mensaje} Stock actual: #{@ingrediente.stock}"
+  end
+
   private
 
   def set_ingrediente
@@ -52,7 +81,7 @@ class Dashboard::IngredientesController < ApplicationController
   end
 
   def ingrediente_params
-    params.require(:ingrediente).permit(:nombre)
+    params.require(:ingrediente).permit(:nombre, :stock, :stock_minimo, :stock_bajo, :bloqueado)
   end
 
   def check_admin
