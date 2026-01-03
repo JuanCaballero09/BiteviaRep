@@ -98,6 +98,7 @@ Rails.application.routes.draw do
 
       get "buscar", to: "busqueda#index"
 
+      get "productos", to: "productos#index"
       get "combos", to: "productos#combos"
 
       get "banners", to: "banners#index"

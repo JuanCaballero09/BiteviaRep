@@ -1,6 +1,18 @@
 class Api::V1::ProductosController < Api::V1::BaseController
-  skip_before_action :authenticate_user!, only: [:combos]
+  skip_before_action :authenticate_user!, only: [:index,:combos]
 
+  def index
+    productos = Product.where(disponible: true)
+                      .includes(:ingredientes, imagen_attachment: :blob)
+                      .order(:id)
+    render json: productos.map { |producto|
+      producto.as_json.merge(
+        imagen_url: producto.imagen.attached? ? url_for(producto.imagen) : nil,
+        ingredientes: producto.ingredientes.pluck(:nombre)
+      )
+    }
+  end
+  
   def combos
     combos = Product.where(type: "Combo", disponible: true)
                     .includes(:ingredientes, imagen_attachment: :blob)
